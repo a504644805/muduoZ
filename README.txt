@@ -31,3 +31,5 @@ Sol:
     (2) info address muduoZ::detail::FixedBuffer<4000000>::bufferStart #get the virtual address of bufferStart
     (3) xxd core #search the virtual address
 
+
+instead of realize AppendFile class and LogFile class. we use File*. We use writev instead of write for less system call. We flush then destroy buffer to make sure info not Miss.

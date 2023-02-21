@@ -6,8 +6,9 @@ CXXFLAGS = -c -g -O0 -Wall -Wextra -Werror \
 
 all: 
 	g++ $(CXXFLAGS) CurrentThread.cc
-	
-	ar -crv libbase.a CurrentThread.o
-	rm CurrentThread.o
+	g++ $(CXXFLAGS) AsyncLogging.cc	
+	#...
+	ar -crv libbase.a CurrentThread.o AsyncLogging.o #...
+	rm CurrentThread.o AsyncLogging.o #...
 	mv libbase.a ../../lib
 .PHONY: all clean

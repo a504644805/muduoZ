@@ -1,12 +1,16 @@
 #ifndef MUDUOZ_BASE_ASYNCLOGGING_H
 #define MUDUOZ_BASE_ASYNCLOGGING_H
 #include <assert.h>
+
 #include <boost/noncopyable.hpp>
+#include <cassert>
+#include <chrono>
 #include <condition_variable>
 #include <cstring>
 #include <memory>
 #include <mutex>
 #include <vector>
+
 #include "ClangSpec.h"
 namespace muduoZ {
 namespace detail {
@@ -19,12 +23,13 @@ class FixedBuffer {
 
     // Note: check avail before append
     void append(const char* msg, int len) {
-        assert(avail >= len);
+        assert(avail() >= len);
         std::memcpy(cur, msg, len);
         cur += len;
     }
-    int len() const { return implicit_cast<int>(cur - data); }
-    int avail() const {return SIZE - len()};
+    int len() const { return static_cast<int>(cur - data); }
+    int avail() const { return SIZE - len(); }
+    int reset() { cur = data; }
 
    private:
     char data[SIZE];
@@ -43,8 +48,8 @@ class FixedBufferWithCookie
                    // same cookie as AsyncLogging, which may
                    // confuse us
    public:
-    Buffer() { cookie = cookieStart; }
-    ~Buffer() { cookie = cookieEnd; }
+    FixedBufferWithCookie() { cookie = cookieStart; }
+    ~FixedBufferWithCookie() { cookie = cookieEnd; }
 
    private:
     void (*cookie)();
@@ -56,6 +61,9 @@ class FixedBufferWithCookie
 
 class AsyncLogging : boost::noncopyable {
    public:
+    AsyncLogging() : curBufPtr(new Buffer) {}
+    ~AsyncLogging() {}
+
     void append(const char* msg, int len);  // front-end
     void threadFunc();                      // back-end
 
@@ -64,9 +72,12 @@ class AsyncLogging : boost::noncopyable {
     typedef std::unique_ptr<Buffer> BufferPtr;
     typedef std::vector<BufferPtr> BufferPtrVector;
 
-    // std::mutex();
-    BufferPtr cur;  // NEW THING: I don't think prepare 2 buffer (currentBuffer_ and nextBuffer_ in muduo) is necessary, it makes things more complicated and makes reader being confused about the meaning of "Double Buffering" technique. If we think buffer space is not large enough, just enlarge cur's buffer size(8MB, for example).
-    BufferPtrVector filledBuffers;
+    std::mutex mtx;
+    std::condition_variable cv;
+    BufferPtr curBufPtr;  // NEW THING: I don't think prepare 2 buffer (currentBuffer_ and nextBuffer_ in muduo) is necessary, it makes things more complicated and makes reader being confused about the meaning of "Double Buffering" technique. If we think buffer space is not large enough, just enlarge cur's buffer size(8MB, for example).
+    BufferPtrVector filledBuffersPtr;
+
+    const int flushInterval_ = 3;
 };
 
 #endif
