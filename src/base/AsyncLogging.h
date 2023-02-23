@@ -1,6 +1,10 @@
 #ifndef MUDUOZ_BASE_ASYNCLOGGING_H
 #define MUDUOZ_BASE_ASYNCLOGGING_H
 #include <assert.h>
+#include <fcntl.h>
+#include <sys/stat.h>
+#include <sys/types.h>
+#include <sys/uio.h>
 
 #include <boost/noncopyable.hpp>
 #include <cassert>
@@ -9,6 +13,7 @@
 #include <cstring>
 #include <memory>
 #include <mutex>
+#include <string>
 #include <vector>
 
 #include "ClangSpec.h"
@@ -61,7 +66,8 @@ class FixedBufferWithCookie
 
 class AsyncLogging : boost::noncopyable {
    public:
-    AsyncLogging() : curBufPtr(new Buffer) {}
+    AsyncLogging() : curBufPtr(new Buffer) {
+    }
     ~AsyncLogging() {}
 
     void append(const char* msg, int len);  // front-end
@@ -78,6 +84,7 @@ class AsyncLogging : boost::noncopyable {
     BufferPtrVector filledBuffersPtr;
 
     const int flushInterval_ = 3;
+    const int bufferOverloadThreash_ = 25;  // When there is more than 25 buffers need to flush, we throw away them.(check threadFunc())
 };
 
 #endif
