@@ -12,7 +12,7 @@ CXXFLAGS = -g -O0 -Wall -Wextra -Werror \
 	   -I$(MUDUO_INCLUDE_2)
 	
 
-LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase
+LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase -lpthread
 
 all: 	
 	make -C ./src/base

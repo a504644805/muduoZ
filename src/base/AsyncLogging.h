@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "ClangSpec.h"
+#include "Thread.h"
 namespace muduoZ {
 namespace detail {
 template <int SIZE>
@@ -24,7 +25,7 @@ class FixedBuffer {
    public:
     FixedBuffer()
         : cur(data) {}
-    ~FixedBuffer();
+    ~FixedBuffer(){};
 
     // Note: check avail before append
     void append(const char* msg, int len) {
@@ -34,7 +35,7 @@ class FixedBuffer {
     }
     int len() const { return static_cast<int>(cur - data); }
     int avail() const { return SIZE - len(); }
-    int reset() { cur = data; }
+    void reset() { cur = data; }
 
    private:
     char data[SIZE];
@@ -66,12 +67,12 @@ class FixedBufferWithCookie
 
 class AsyncLogging : boost::noncopyable {
    public:
-    AsyncLogging() : curBufPtr(new Buffer) {
-    }
+    AsyncLogging() : curBufPtr(new Buffer), thread(std::bind(&AsyncLogging::threadFunc, this)), started_(false) {}
     ~AsyncLogging() {}
 
     void append(const char* msg, int len);  // front-end
     void threadFunc();                      // back-end
+    void start();
 
    private:
     typedef muduoZ::detail::FixedBufferWithCookie<muduoZ::detail::LargeBufferSize> Buffer;
@@ -84,7 +85,10 @@ class AsyncLogging : boost::noncopyable {
     BufferPtrVector filledBuffersPtr;
 
     const int flushInterval_ = 3;
-    const int bufferOverloadThreash_ = 25;  // When there is more than 25 buffers need to flush, we throw away them.(check threadFunc())
+    const unsigned bufferOverloadThreash_ = 25;  // When there is more than 25 buffers need to flush,
+                                                 // we throw away them.(check threadFunc())
+    Thread thread;
+    bool started_;
 };
 
 #endif
