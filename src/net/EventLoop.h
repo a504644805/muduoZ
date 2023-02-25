@@ -1,7 +1,9 @@
 #ifndef MUDUOZ_NET_EVENTLOOP_H
 #define MUDUOZ_NET_EVENTLOOP_H
 #include <stdio.h>
+
 #include <boost/noncopyable.hpp>
+
 #include "CurrentThread.h"
 using namespace muduoZ;
 // one loop per thread
@@ -11,9 +13,7 @@ class EventLoop : boost::noncopyable {
     EventLoop() : threadId_(::CurrentThread::getTid()) {}
     ~EventLoop(){};
 
-    bool inThreadId_Thread() const {
-        return threadId_ == ::CurrentThread::getTid();
-    }
+    bool inThreadId_Thread() const { return threadId_ == ::CurrentThread::getTid(); }
     void loop();
 
    private:
