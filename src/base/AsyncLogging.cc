@@ -1,6 +1,9 @@
 #include "AsyncLogging.h"
 
 #include "Timestamp.h"
+
+AsyncLogging g_asynclogging;
+
 // 前端不停往cur写数据，直到cur写满。把cur放入filledBuffer并new一个新Buffer给cur
 void AsyncLogging::append(const char* msg, int len) {
     std::lock_guard<std::mutex> guard(mtx);

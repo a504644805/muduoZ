@@ -36,6 +36,9 @@ class FixedBuffer {
     int len() const { return static_cast<int>(cur - data); }
     int avail() const { return SIZE - len(); }
     void reset() { cur = data; }
+    const char* begin() const { return data; }
+    char* current() const { return cur; }
+    void addCurrent(size_t len) { cur += len; }
 
    private:
     char data[SIZE];
