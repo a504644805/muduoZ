@@ -8,8 +8,10 @@ CXXFLAGS = -c -g -O0 -Wall -Wextra -Werror \
 
 all: 
 	g++ $(CXXFLAGS) EventLoop.cc
-	
-	ar -crv libnet.a EventLoop.o
-	rm EventLoop.o
+	g++ $(CXXFLAGS) Channel.cc
+	g++ $(CXXFLAGS) Poller.cc
+	#...
+	ar -crv libnet.a EventLoop.o Channel.o Poller.o #...
+	rm EventLoop.o Channel.o Poller.o #...
 	mv libnet.a ../../lib
 .PHONY: all clean

@@ -6,9 +6,6 @@ using namespace std;
 using namespace muduoZ;
 extern AsyncLogging g_asynclogging;
 int main() {
-    LOG_INFO << "Program Started, " << 123321;
-    LOG_INFO << "Program Started, " << 321123;
-
     g_asynclogging.start();
 
     EventLoop loop;

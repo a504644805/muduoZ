@@ -4,8 +4,9 @@
 #include <sys/epoll.h>
 
 #include <boost/noncopyable.hpp>
+#include <unordered_map>
 
-#include "Channel.h"
+class Channel;
 /*
 Usage of epoll:
 epollfd = epoll_create
@@ -15,19 +16,22 @@ epoll_ctl //used to add/mod/del epoll_event
 class Poller : boost::noncopyable {
    public:
     typedef std::vector<Channel*> ChannelList;
-    Poller() {
-        epollfd = epoll_create1(EPOLL_CLOEXEC);
-        if (epollfd < 0) {
-            LOG_SYSFATAL << "epoll_create1 failed";
-        }
-    }
+    Poller();
     ~Poller();
 
-    void poll(ChannelList& activeChannels);
+    void poll(ChannelList& activeChannels, int timeout);
+
     void updateChannel(Channel* channel);
+    void removeChannel(Channel* channel);
 
    private:
-    int epollfd;
+    int epollfd_;
+
+    typedef std::unordered_map<int, Channel*> ChannelMap;
+    ChannelMap channelMap_;  // for updateChannel
+
+    static const int kMaxevents = 25;
+    epoll_event activeEvents_[kMaxevents];  // for epoll_wait
 };
 
 #endif

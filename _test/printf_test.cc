@@ -3,11 +3,10 @@
 
 #include <iostream>
 using namespace std;
-int main() {
-    const char* str = "Hello World\n";
-    cout << sizeof str << endl;
-    cout << strlen(str) << endl;
+class C {
+    C(int a) {}
+    C(int& c) = delete;
+};
 
-    char buf[64];
-    cout << sizeof buf << endl;
+int main() {
 }
