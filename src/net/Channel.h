@@ -1,6 +1,7 @@
 #ifndef MUDUOZ_NET_CHANNEL_H
 #define MUDUOZ_NET_CHANNEL_H
 #include <poll.h>
+#include <sys/epoll.h>
 
 #include <boost/noncopyable.hpp>
 #include <functional>
@@ -22,7 +23,11 @@ class Channel : public boost::noncopyable {
     int revents() { return revents_; }
     void set_revents(int revents) { revents_ = revents; }
     void set_onReadableCb_(EventCallback cb) { onReadableCb_ = cb; }
-    void enableReading() { events_ |= (POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI); }
+    void set_onWriteableCb_(EventCallback cb) { onWriteableCb_ = cb; }
+    void set_onCloseCb_(EventCallback cb) { onCloseCb_ = cb; }
+
+    void enableReading() { events_ |= (EPOLLIN | EPOLLPRI); }
+    void enableWriting() { events_ |= (EPOLLOUT); }
 
     // helper
     std::string reventsToString() const;
@@ -35,8 +40,9 @@ class Channel : public boost::noncopyable {
     int revents_;
     EventCallback onReadableCb_;
     EventCallback onWriteableCb_;
+    EventCallback onCloseCb_;
 
-    const int capable_ = POLLIN | POLLRDNORM | POLLRDBAND | POLLPRI | POLLOUT | POLLWRNORM | POLLWRBAND;  // event we current support
+    const int capable_ = EPOLLIN | EPOLLPRI | EPOLLOUT | EPOLLHUP;  // event we current support
 };
 
 #endif

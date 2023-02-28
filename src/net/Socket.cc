@@ -14,6 +14,9 @@ Socket::Socket() {
     }
 }
 
+Socket::Socket(int sockfd) : sockfd_(sockfd) {
+}
+
 Socket::~Socket() {
     if (close(sockfd_) < 0) {
         LOG_SYSERR << "socket closure failed";
@@ -47,4 +50,18 @@ int Socket::accept(SockAddrIn* peerAddr) {
         }
     }
     return connfd;
+}
+
+int Socket::read(void* buf, int buflen) {
+    int n = ::read(sockfd_, buf, buflen);
+    if (n < 0) {
+        LOG_SYSFATAL << "read failed";
+    }
+}
+
+int Socket::write(const void* buf, int buflen) {
+    int n = ::write(sockfd_, buf, buflen);
+    if (n < 0) {
+        LOG_SYSFATAL << "write failed";
+    }
 }

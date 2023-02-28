@@ -11,10 +11,13 @@ class SockAddrIn;
 class Socket : boost::noncopyable {
    public:
     Socket();
+    explicit Socket(int sockfd);
     ~Socket();
     void bindAddress(SockAddrIn& addr);
     void listen();
     int accept(SockAddrIn* peerAddr);
+    int read(void* buf, int buflen);
+    int write(const void* buf, int buflen);
 
     int sockfd() { return sockfd_; }
 

@@ -7,22 +7,35 @@
 #include <unordered_set>
 
 #include "Acceptor.h"
+#include "callback.h"
 class TcpConnection;
+class Buffer;
+class EventLoop;
 class TcpServer : public boost::noncopyable {
    public:
-    typedef std::shared_ptr<TcpConnection> TcpConnectionPtr;
-
-    TcpServer(SockAddrIn& bindAddr, EventLoop* loop) : acceptor_(bindAddr, loop) {
-        acceptor_.set_newConnectionCb(std::bind(&TcpServer::newConnection, this, std::placeholders::_1));
-    }
+    TcpServer(SockAddrIn& bindAddr, EventLoop* loop);
     ~TcpServer();
-    void start() { acceptor_.start(); }
-    void newConnection(int connfd);
-    // a series cb interface for user
+    void start();
+
+    void set_onConnectionCb(const OnConnectionCb& cb) { onConnectionCb_ = cb; }
+    void set_onCloseCb(const OnCloseCb& cb) { onCloseCb_ = cb; }
+    void set_onMessageCb(const OnMessageCb& cb) { onMessageCb_ = cb; }
+    void set_onWriteCompleteCb(const OnWriteCompleteCb& cb) { onWriteCompleteCb_ = cb; }
+
+    // when a connection is created or closed, there are something need to be done by TcpServer.
+    void newConnection(int connfd);                       // called by Acceptor when new conn arrives.
+    void removeConnection(const TcpConnectionPtr& conn);  // called by TcpConnection when a conn is closed
 
    private:
     Acceptor acceptor_;
     std::unordered_set<TcpConnectionPtr> connectionSet_;
+
+    OnConnectionCb onConnectionCb_;
+    OnCloseCb onCloseCb_;
+    OnMessageCb onMessageCb_;
+    OnWriteCompleteCb onWriteCompleteCb_;
+
+    EventLoop* loop_;
 };
 
 #endif

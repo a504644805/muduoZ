@@ -8,5 +8,8 @@ class C {
     C(int& c) = delete;
 };
 
+class C;
+class C;
+
 int main() {
 }
