@@ -1,15 +1,10 @@
 #include <stdio.h>
-#include <string.h>
 
 #include <iostream>
+#include <vector>
 using namespace std;
-class C {
-    C(int a) {}
-    C(int& c) = delete;
-};
 
 class C;
-class C;
-
 int main() {
+    fprintf(stderr, "Error happend, can u see me\n");
 }

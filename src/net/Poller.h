@@ -5,6 +5,7 @@
 
 #include <boost/noncopyable.hpp>
 #include <unordered_map>
+#include <vector>
 
 class Channel;
 /*

@@ -13,7 +13,7 @@ class Poller;
 class Channel : public boost::noncopyable {
    public:
     typedef std::function<void()> EventCallback;
-    Channel(int fd) : fd_(), events_(0), revents_(0) {}
+    Channel(int fd) : fd_(fd), events_(0), revents_(0), tied_(0) {}
     ~Channel() {}  // Life circle of fd is responsible for owner of channel (TcpConnection, Acceptor etc)
 
     void handleEvent();
@@ -28,11 +28,17 @@ class Channel : public boost::noncopyable {
 
     void enableReading() { events_ |= (EPOLLIN | EPOLLPRI); }
     void enableWriting() { events_ |= (EPOLLOUT); }
+    void disableWriting() { events_ &= ~(EPOLLOUT); }
 
     // helper
     std::string reventsToString() const;
     std::string eventsToString() const;
     std::string eventsToString(int fd, int ev) const;
+
+    // copy from muduo
+    /// Tie this channel to the owner object managed by shared_ptr,
+    /// prevent the owner object being destroyed in handleEvent.
+    void tie(const std::shared_ptr<void>&);
 
    private:
     int fd_;
@@ -43,6 +49,9 @@ class Channel : public boost::noncopyable {
     EventCallback onCloseCb_;
 
     const int capable_ = EPOLLIN | EPOLLPRI | EPOLLOUT | EPOLLHUP;  // event we current support
+
+    std::weak_ptr<void> tie_;
+    bool tied_;
 };
 
 #endif

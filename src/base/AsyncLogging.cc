@@ -50,7 +50,7 @@ void AsyncLogging::threadFunc() {
         int totalBytesToWrite = 0;
         for (int i = 0; i < iovcnt; i++) {
             vec[i].iov_base = buffersToWrite[i].get();
-            int availBytes = buffersToWrite[i]->avail();
+            int availBytes = buffersToWrite[i]->len();
             vec[i].iov_len = availBytes;
             totalBytesToWrite += availBytes;
         }

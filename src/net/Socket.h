@@ -25,4 +25,10 @@ class Socket : boost::noncopyable {
     int sockfd_;
 };
 
+namespace muduoZ {
+namespace socket {
+int creatNonblockingSocketOrDie();
+int connect(int sockfd, const SockAddrIn& serverAddr);
+}  // namespace socket
+}  // namespace muduoZ
 #endif

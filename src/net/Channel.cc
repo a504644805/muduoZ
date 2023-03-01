@@ -2,6 +2,11 @@
 
 #include <sstream>
 void Channel::handleEvent() {
+    std::shared_ptr<void> guard;
+    if (tied_) {
+        guard = tie_.lock();
+        assert(guard);
+    }
     if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {  //??? When will this happen.
         assert(onCloseCb_);
         onCloseCb_();
@@ -10,12 +15,12 @@ void Channel::handleEvent() {
         assert(onReadableCb_);
         onReadableCb_();
     }
-    if (revents_ & POLLOUT) {
+    if (revents_ & EPOLLOUT) {
         assert(onWriteableCb_);
         onWriteableCb_();
     }
     if (revents_ & (~capable_))  // TODO:handle other events
-        LOG_SYSFATAL << "Don't know how to handle this(these) event(s): " << (revents_ & (~capable_));
+        LOG_SYSFATAL << "Don't know how to handle some of this(these) event(s): " << eventsToString(fd_, revents_).c_str();
 }
 
 // copy from muduo
@@ -28,20 +33,33 @@ std::string Channel::eventsToString() const {
 std::string Channel::eventsToString(int fd, int ev) const {
     std::ostringstream oss;
     oss << fd << ": ";
-    if (ev & POLLIN)
+    if (ev & EPOLLIN)
         oss << "IN ";
-    if (ev & POLLPRI)
-        oss << "PRI ";
-    if (ev & POLLOUT)
+    if (ev & EPOLLOUT)
         oss << "OUT ";
-    if (ev & POLLHUP)
-        oss << "HUP ";
-    if (ev & POLLRDHUP)
+    if (ev & EPOLLRDHUP)
         oss << "RDHUP ";
-    if (ev & POLLERR)
+    if (ev & EPOLLPRI)
+        oss << "PRI ";
+    if (ev & EPOLLERR)
         oss << "ERR ";
-    if (ev & POLLNVAL)
-        oss << "NVAL ";
-
+    if (ev & EPOLLHUP)
+        oss << "HUP ";
+    if (ev & EPOLLET)
+        oss << "ET ";
+    if (ev & EPOLLONESHOT)
+        oss << "ONESHOT ";
+    if (ev & EPOLLWAKEUP)
+        oss << "WAKEUP ";
+    if (ev & EPOLLEXCLUSIVE)
+        oss << "EXCLUSIVE ";
+    if (int unknownEv = ev & (~(EPOLLIN | EPOLLOUT | EPOLLRDHUP | EPOLLPRI | EPOLLERR | EPOLLHUP | EPOLLET | EPOLLONESHOT | EPOLLWAKEUP | EPOLLEXCLUSIVE))) {
+        LOG_SYSFATAL << "Unknown events: " << unknownEv << " known events: " << oss.str().c_str();
+    }
     return oss.str();
+}
+
+void Channel::tie(const std::shared_ptr<void>& obj) {
+    tie_ = obj;
+    tied_ = true;
 }

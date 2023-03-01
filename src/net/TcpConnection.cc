@@ -15,6 +15,7 @@ void TcpConnection::connEstablished() {  // called by TcpServer
     channel_->set_onWriteableCb_(std::bind(&TcpConnection::handleWrite, this));
     channel_->set_onCloseCb_(std::bind(&TcpConnection::handleClose, this));
     channel_->enableReading();  // Don't enable writing here. If we don't send, POLLOUT will always be here (under Level triger)
+    channel_->tie(shared_from_this());
     loop_->updateChannel(channel_.get());
 
     assert(onConnectionCb);
@@ -22,28 +23,47 @@ void TcpConnection::connEstablished() {  // called by TcpServer
 }
 
 void TcpConnection::handleRead() {
-    char buf[65536];
-    int len = socket_->read(buf, sizeof buf);
+    int len = inputBuffer.readFd(socket_->sockfd());
     if (len == 0) {
         handleClose();
     } else {
         assert(onMessageCb);
-        onMessageCb(shared_from_this(), buf, len);
+        onMessageCb(shared_from_this(), &inputBuffer);
     }
 }
 void TcpConnection::handleWrite() {
     /*
-    if output buffer is not empty
+    if outputBuffer is not empty
         write as much as we can
+        if outputBuffer is empty, writeCompleteCb
     else
         disable writing
     */
+    if (outputBuffer.readableBytes() > 0) {
+        int n = socket_->write(outputBuffer.readPtr(), outputBuffer.readableBytes());
+        outputBuffer.retrieve(n);
+        if (outputBuffer.writeableBytes() == 0) {
+            assert(onWriteCompleteCb);
+            onWriteCompleteCb(shared_from_this());
+        }
+    }
+    if (outputBuffer.readableBytes() == 0) {
+        channel_->disableWriting();  // avoid POLLOUT (because we are level trigger)
+        loop_->updateChannel(channel_.get());
+    }
 }
 void TcpConnection::handleClose() {
     loop_->removeChannel(channel_.get());
-    onCloseCb(shared_from_this());               // L1
-    cbForTcpServer_onClose(shared_from_this());  // L2. sequence of L1 and L2 should't be switched, Or TcpConnection may be destroy before onCloseCb
+    onCloseCb(shared_from_this());
+    cbForTcpServer_onClose(shared_from_this());  //
 }
 
 void TcpConnection::send(const char* str, int len) {
+    /*
+    append into output buffer
+    enable writing
+    */
+    outputBuffer.append(str, len);
+    channel_->enableWriting();
+    loop_->updateChannel(channel_.get());
 }

@@ -9,7 +9,7 @@ class SockAddrIn {
    public:
     explicit SockAddrIn(int port);
     ~SockAddrIn(){};
-    const struct sockaddr_in* addr() { return &addr_; }
+    const struct sockaddr_in* addr() const { return &addr_; }
     void set_sockaddr(const struct sockaddr_in& addr) { addr_ = addr; }
 
    private:

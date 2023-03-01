@@ -8,7 +8,7 @@
 #include "Channel.h"
 #include "SockAddrIn.h"
 Socket::Socket() {
-    sockfd_ = socket(AF_INET, SOCK_STREAM, 0);
+    sockfd_ = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
     if (sockfd_ < 0) {
         LOG_SYSFATAL << "socket creation failed";
     }
@@ -24,7 +24,7 @@ Socket::~Socket() {
 }
 
 void Socket::bindAddress(SockAddrIn& addr) {
-    if (bind(sockfd_, (sockaddr*)addr.addr(), sizeof *addr.addr()) < 0) {
+    if (bind(sockfd_, reinterpret_cast<const sockaddr*>(addr.addr()), sizeof *addr.addr()) < 0) {
         LOG_SYSERR << "socket bind failed";
     }
 }
@@ -40,7 +40,7 @@ int Socket::accept(SockAddrIn* peerAddr) {
     struct sockaddr_in cli;
     socklen_t len = sizeof(cli);
 
-    int connfd = ::accept4(sockfd_, (sockaddr*)&cli, &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
+    int connfd = ::accept4(sockfd_, reinterpret_cast<sockaddr*>(&cli), &len, SOCK_NONBLOCK | SOCK_CLOEXEC);
     if (connfd < 0) {
         LOG_SYSERR << "accept failed";
     } else {
@@ -53,15 +53,34 @@ int Socket::accept(SockAddrIn* peerAddr) {
 }
 
 int Socket::read(void* buf, int buflen) {
-    int n = ::read(sockfd_, buf, buflen);
+    int n = static_cast<int>(::read(sockfd_, buf, buflen));  // FIXME:underly error. check all cast stuff
     if (n < 0) {
         LOG_SYSFATAL << "read failed";
     }
+    return n;
 }
 
 int Socket::write(const void* buf, int buflen) {
-    int n = ::write(sockfd_, buf, buflen);
+    int n = static_cast<int>(::write(sockfd_, buf, buflen));
     if (n < 0) {
         LOG_SYSFATAL << "write failed";
     }
+    return n;
 }
+
+namespace muduoZ {
+namespace socket {
+int creatNonblockingSocketOrDie() {
+    int sockfd_ = ::socket(AF_INET, SOCK_STREAM | SOCK_NONBLOCK, 0);
+    if (sockfd_ < 0) {
+        LOG_SYSFATAL << "socket creation failed";
+    }
+    return sockfd_;
+}
+
+int connect(int sockfd, const SockAddrIn& serverAddr) {
+    return ::connect(sockfd, reinterpret_cast<const sockaddr*>(serverAddr.addr()), sizeof(struct sockaddr_in));
+}
+
+}  // namespace socket
+}  // namespace muduoZ

@@ -4,6 +4,7 @@
 #include <boost/noncopyable.hpp>
 #include <memory>
 
+#include "Buffer.h"
 #include "callback.h"
 class Channel;
 class Socket;
@@ -30,6 +31,8 @@ class TcpConnection : public boost::noncopyable, public std::enable_shared_from_
 
    private:
     std::unique_ptr<Channel> channel_;  // use unique_ptr instead of Channel channel_ so we don't need to include "Channel.h"
+    Buffer inputBuffer;
+    Buffer outputBuffer;
 
     std::unique_ptr<Socket> socket_;  // for simplity of using socket operation such as read/write
     EventLoop* loop_;
