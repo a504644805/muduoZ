@@ -21,6 +21,8 @@ class Socket : boost::noncopyable {
 
     int sockfd() { return sockfd_; }
 
+    void setTcpNoDelay(bool on);
+
    private:
     int sockfd_;
 };
@@ -29,6 +31,7 @@ namespace muduoZ {
 namespace socket {
 int creatNonblockingSocketOrDie();
 int connect(int sockfd, const SockAddrIn& serverAddr);
+int getSocketError(int sockfd);
 }  // namespace socket
 }  // namespace muduoZ
 #endif

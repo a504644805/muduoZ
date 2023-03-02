@@ -29,6 +29,8 @@ class TcpConnection : public boost::noncopyable, public std::enable_shared_from_
 
     void set_CbForTcpServer_onClose(const CbForTcpServer_onClose& cb) { cbForTcpServer_onClose = cb; }
 
+    void setTcpNoDelay(bool on);
+
    private:
     std::unique_ptr<Channel> channel_;  // use unique_ptr instead of Channel channel_ so we don't need to include "Channel.h"
     Buffer inputBuffer;

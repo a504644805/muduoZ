@@ -14,7 +14,7 @@ class Channel : public boost::noncopyable {
    public:
     typedef std::function<void()> EventCallback;
     Channel(int fd) : fd_(fd), events_(0), revents_(0), tied_(0) {}
-    ~Channel() {}  // Life circle of fd is responsible for owner of channel (TcpConnection, Acceptor etc)
+    ~Channel() {}  // Life circle of fd and logout from poller is responsible for owner of channel (TcpConnection, Acceptor etc)
 
     void handleEvent();
 

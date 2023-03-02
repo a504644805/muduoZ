@@ -12,10 +12,15 @@ class Timestamp : public boost::less_than_comparable<Timestamp>,
     static Timestamp now();
     std::string toFormattedString();
 
+    int64_t microseconds() { return microseconds_; }
+
     static const int kMicrosecondsPerSecond = 1000 * 1000;
 
    private:
     int64_t microseconds_;
 };
+
+bool operator<(Timestamp lhs, Timestamp rhs);
+inline bool operator==(Timestamp lhs, Timestamp rhs);
 
 #endif

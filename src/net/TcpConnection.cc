@@ -67,3 +67,7 @@ void TcpConnection::send(const char* str, int len) {
     channel_->enableWriting();
     loop_->updateChannel(channel_.get());
 }
+
+void TcpConnection::setTcpNoDelay(bool on) {
+    socket_->setTcpNoDelay(on);
+}

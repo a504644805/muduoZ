@@ -2,6 +2,8 @@
 
 #include <netdb.h>
 #include <netinet/in.h>
+#include <netinet/tcp.h>
+#include <stdio.h>  // snprintf
 #include <sys/socket.h>
 #include <sys/types.h>
 
@@ -68,6 +70,13 @@ int Socket::write(const void* buf, int buflen) {
     return n;
 }
 
+void Socket::setTcpNoDelay(bool on) {
+    int optval = on ? 1 : 0;
+    if (::setsockopt(sockfd_, IPPROTO_TCP, TCP_NODELAY, &optval, static_cast<socklen_t>(sizeof optval)) < 0) {
+        LOG_SYSFATAL << "setsockopt failed";
+    }
+}
+
 namespace muduoZ {
 namespace socket {
 int creatNonblockingSocketOrDie() {
@@ -80,6 +89,18 @@ int creatNonblockingSocketOrDie() {
 
 int connect(int sockfd, const SockAddrIn& serverAddr) {
     return ::connect(sockfd, reinterpret_cast<const sockaddr*>(serverAddr.addr()), sizeof(struct sockaddr_in));
+}
+
+// copy from muduo
+int getSocketError(int sockfd) {
+    int optval;
+    socklen_t optlen = static_cast<socklen_t>(sizeof optval);
+
+    if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
+        LOG_SYSFATAL << "getsockopt failed";
+    } else {
+        return optval;
+    }
 }
 
 }  // namespace socket

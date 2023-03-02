@@ -28,3 +28,11 @@ std::string Timestamp::toFormattedString() {
     snprintf(bufMicrseconds, 32, "%d.", microseconds);
     return std::string(buf) + bufMicrseconds;
 }
+
+bool operator<(Timestamp lhs, Timestamp rhs) {
+    return lhs.microseconds() < rhs.microseconds();
+}
+
+inline bool operator==(Timestamp lhs, Timestamp rhs) {
+    return lhs.microseconds() == rhs.microseconds();
+}
