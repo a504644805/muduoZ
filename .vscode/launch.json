@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/xy/projects/muduoZ/test",
+            "program": "/home/xy/projects/muduoZ/pingpongClient",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -26,7 +26,8 @@
                     "text": "-gdb-set disassembly-flavor intel",
                     "ignoreFailures": true
                 }
-            ]
+            ],
+            "miDebuggerArgs": "--args /home/xy/projects/muduoZ/pingpongClient 0.0.0.0 2008 1 1024 1 10"
         }
     ]
 }

@@ -33,6 +33,6 @@ bool operator<(Timestamp lhs, Timestamp rhs) {
     return lhs.microseconds() < rhs.microseconds();
 }
 
-inline bool operator==(Timestamp lhs, Timestamp rhs) {
+bool operator==(Timestamp lhs, Timestamp rhs) {
     return lhs.microseconds() == rhs.microseconds();
 }

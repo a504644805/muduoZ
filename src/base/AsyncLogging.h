@@ -70,12 +70,13 @@ class FixedBufferWithCookie
 
 class AsyncLogging : boost::noncopyable {
    public:
-    AsyncLogging() : curBufPtr(new Buffer), thread(std::bind(&AsyncLogging::threadFunc, this)), started_(false) {}
+    AsyncLogging() : curBufPtr(new Buffer), thread(std::bind(&AsyncLogging::threadFunc, this)), started_(false), quit_(false) {}
     ~AsyncLogging() {}
 
     void append(const char* msg, int len);  // front-end
     void threadFunc();                      // back-end
     void start();
+    void stop();
 
    private:
     typedef muduoZ::detail::FixedBufferWithCookie<muduoZ::detail::LargeBufferSize> Buffer;
@@ -92,6 +93,7 @@ class AsyncLogging : boost::noncopyable {
                                                  // we throw away them.(check threadFunc())
     Thread thread;
     bool started_;
+    bool quit_;
 };
 
 #endif

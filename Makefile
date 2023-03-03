@@ -14,9 +14,16 @@ CXXFLAGS = -g -O0 -Wall -Wextra -Werror \
 
 LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase -lpthread
 
-all: 	
+all:
 	make -C ./src/base
 	make -C ./src/net
-	g++ $(CXXFLAGS) -o test test.cc $(LDFLAGS)
+	g++ $(CXXFLAGS) -o pingpongServer pingpongServer.cc $(LDFLAGS)
+	g++ $(CXXFLAGS) -o pingpongClient pingpongClient.cc $(LDFLAGS)
 
+src: 	
+	make -C ./src/base
+	make -C ./src/net
+this:
+	g++ $(CXXFLAGS) -o pingpongServer pingpongServer.cc $(LDFLAGS)
+	g++ $(CXXFLAGS) -o pingpongClient pingpongClient.cc $(LDFLAGS)
 .PHONY: all clean

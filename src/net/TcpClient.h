@@ -24,6 +24,8 @@ class TcpClient : boost::noncopyable {
     void newConnection(int connfd);
     void removeConnection(const TcpConnectionPtr& conn);
 
+    void disconnect();
+
    private:
     std::unique_ptr<Connector> connector_;
     TcpConnectionPtr connection_;

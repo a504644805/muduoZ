@@ -51,6 +51,9 @@
         "typeinfo": "cpp",
         "strstream": "cpp",
         "unordered_set": "cpp",
-        "cerrno": "cpp"
+        "cerrno": "cpp",
+        "map": "cpp",
+        "set": "cpp",
+        "cinttypes": "cpp"
     }
 }

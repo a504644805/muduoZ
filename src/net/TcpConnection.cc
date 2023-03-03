@@ -71,3 +71,8 @@ void TcpConnection::send(const char* str, int len) {
 void TcpConnection::setTcpNoDelay(bool on) {
     socket_->setTcpNoDelay(on);
 }
+
+void TcpConnection::shutdown() {
+    // FIXME: judge if there exists data need to send before SHUT_WR
+    socket_->shutdownWrite();
+}

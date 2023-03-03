@@ -21,6 +21,12 @@ class Timestamp : public boost::less_than_comparable<Timestamp>,
 };
 
 bool operator<(Timestamp lhs, Timestamp rhs);
-inline bool operator==(Timestamp lhs, Timestamp rhs);
+bool operator==(Timestamp lhs, Timestamp rhs);
+
+// copy from mudup
+inline Timestamp addTime(Timestamp timestamp, double seconds) {
+    int64_t delta = static_cast<int64_t>(seconds * Timestamp::kMicrosecondsPerSecond);
+    return Timestamp(timestamp.microseconds() + delta);
+}
 
 #endif

@@ -40,3 +40,8 @@ void TcpClient::newConnection(int connfd) {
 void TcpClient::removeConnection(const TcpConnectionPtr& conn) {
     connection_.reset();
 }
+
+void TcpClient::disconnect() {
+    if (connection_)
+        connection_->shutdown();
+}

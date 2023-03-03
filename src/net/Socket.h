@@ -22,6 +22,7 @@ class Socket : boost::noncopyable {
     int sockfd() { return sockfd_; }
 
     void setTcpNoDelay(bool on);
+    void shutdownWrite();
 
    private:
     int sockfd_;

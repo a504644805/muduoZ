@@ -28,7 +28,7 @@ void AsyncLogging::threadFunc() {
 
     BufferPtr newBufPtr(new Buffer());
     BufferPtrVector buffersToWrite;
-    while (1) {
+    while (!quit_) {
         {
             std::unique_lock<std::mutex> lk(mtx);
             if (filledBuffersPtr.empty())
@@ -75,4 +75,10 @@ void AsyncLogging::start() {
         thread.start();
         started_ = true;
     }
+}
+
+void AsyncLogging::stop() {
+    quit_ = true;
+    cv.notify_one();
+    thread.join();
 }

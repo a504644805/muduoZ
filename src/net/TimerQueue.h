@@ -7,25 +7,14 @@
 #include <set>
 #include <vector>
 
+#include "Timer.h"
 #include "Timestamp.h"
-
 class Channel;
 class EventLoop;
 // TODO:support repeat timer
 // TODO:support cancel
 class TimerQueue : public boost::noncopyable {
    public:
-    class Timer {
-       public:
-        typedef std::function<void()> TimerCallback;
-        Timer(const TimerCallback& cb, Timestamp expiration_time) : cb_(cb), expiration_time_(expiration_time) {}
-        ~Timer() {}
-        void runCb() const { cb_(); }
-
-       private:
-        TimerCallback cb_;
-        Timestamp expiration_time_;
-    };
     // FIXME:Use unique_ptr instead of raw pointer. so we don't need to delete
     // muduo: This requires heterogeneous comparison lookup (N3465) from C++14. so that we can find an T* in a set<unique_ptr<T>>.
     typedef std::pair<Timestamp, Timer*> Entry;

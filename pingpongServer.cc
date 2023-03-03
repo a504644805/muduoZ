@@ -31,7 +31,10 @@ void onMessage(const TcpConnectionPtr& conn, Buffer* buf) {
 void onWriteComplete(const TcpConnectionPtr& conn) {
 }
 
+extern AsyncLogging g_asynclogging;
 int main(int argc, char* argv[]) {
+    g_asynclogging.start();
+
     LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::getTid();
 
     SockAddrIn listenAddr(2008);

@@ -77,6 +77,12 @@ void Socket::setTcpNoDelay(bool on) {
     }
 }
 
+void Socket::shutdownWrite() {
+    if (::shutdown(sockfd_, SHUT_WR) < 0) {
+        LOG_SYSFATAL << "sockets::shutdownWrite";
+    }
+}
+
 namespace muduoZ {
 namespace socket {
 int creatNonblockingSocketOrDie() {
@@ -98,6 +104,7 @@ int getSocketError(int sockfd) {
 
     if (::getsockopt(sockfd, SOL_SOCKET, SO_ERROR, &optval, &optlen) < 0) {
         LOG_SYSFATAL << "getsockopt failed";
+        return -1;  // never run to here, just make compiler happy
     } else {
         return optval;
     }
