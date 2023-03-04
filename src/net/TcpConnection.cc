@@ -43,8 +43,8 @@ void TcpConnection::handleWrite() {
         int n = socket_->write(outputBuffer.readPtr(), outputBuffer.readableBytes());
         outputBuffer.retrieve(n);
         if (outputBuffer.writeableBytes() == 0) {
-            assert(onWriteCompleteCb);
-            onWriteCompleteCb(shared_from_this());
+            if (onWriteCompleteCb)
+                onWriteCompleteCb(shared_from_this());
         }
     }
     if (outputBuffer.readableBytes() == 0) {
@@ -63,9 +63,22 @@ void TcpConnection::send(const char* str, int len) {
     append into output buffer
     enable writing
     */
-    outputBuffer.append(str, len);
-    channel_->enableWriting();
-    loop_->updateChannel(channel_.get());
+    int remainBytes = len;
+    int nwrite = 0;
+    if (!channel_->isWriteing()) {
+        assert(outputBuffer.readableBytes() == 0);
+        nwrite = socket_->write(str, len);
+        remainBytes = len - nwrite;
+        if (remainBytes == 0 && onWriteCompleteCb)
+            onWriteCompleteCb(shared_from_this());
+    }
+    if (remainBytes > 0) {
+        outputBuffer.append(str + nwrite, remainBytes);
+        if (!channel_->isWriteing()) {
+            channel_->enableWriting();
+            loop_->updateChannel(channel_.get());
+        }
+    }
 }
 
 void TcpConnection::setTcpNoDelay(bool on) {

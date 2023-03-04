@@ -157,6 +157,7 @@ int main(int argc, char* argv[]) {
         fprintf(stderr, "Usage: client <host_ip> <port> <threads> <blocksize> ");
         fprintf(stderr, "<sessions> <time>\n");
     } else {
+        Logger::setLogLevel(Logger::WARN);
         g_asynclogging.start();
 
         LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::getTid();

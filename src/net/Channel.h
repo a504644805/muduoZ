@@ -40,6 +40,8 @@ class Channel : public boost::noncopyable {
     /// prevent the owner object being destroyed in handleEvent.
     void tie(const std::shared_ptr<void>&);
 
+    bool isWriteing() { return events_ &= EPOLLOUT; }
+
    private:
     int fd_;
     int events_;
