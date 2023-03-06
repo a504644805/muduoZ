@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/xy/projects/muduoZ/pingpongClient",
+            "program": "/home/xy/projects/muduoZ/pingpongServer",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",
@@ -27,7 +27,7 @@
                     "ignoreFailures": true
                 }
             ],
-            "miDebuggerArgs": "--args /home/xy/projects/muduoZ/pingpongClient 0.0.0.0 2008 1 1024 1 10"
+            //"miDebuggerArgs": "--args /home/xy/projects/muduoZ/pingpongClient 0.0.0.0 2008 1 1024 100 100"
         }
     ]
 }

@@ -87,7 +87,6 @@ class Client {
           sessionCount_(sessionCount),
           timeout_(timeout) {
         loop->runAfter(timeout, std::bind(&Client::handleTimeout, this));
-
         for (int i = 0; i < blockSize; ++i) {
             message_.push_back(static_cast<char>(i % 128));
         }

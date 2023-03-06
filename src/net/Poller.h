@@ -31,7 +31,7 @@ class Poller : boost::noncopyable {
     typedef std::unordered_map<int, Channel*> ChannelMap;
     ChannelMap channelMap_;  // for updateChannel
 
-    static const int kMaxevents = 25;
+    static const int kMaxevents = 200;
     epoll_event activeEvents_[kMaxevents];  // for epoll_wait
 };
 
