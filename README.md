@@ -32,13 +32,7 @@ muduo是由<span class="underline">chen shuo</span>所写基于Reactor模式的C
 
 其中由EventLoop、Poller、Channel构成的Reactor框架是muduo的核心，EventLoop的loop函数会循环往复地进行"调用poll/epoll(由Poller封装)，处理事件"。Server和Client三件套则通过Channel来接入Reactor框架（Channel==黏合剂 部分对如何接入进行了介绍）。
 
-![Image text](https://raw.github.com/a504644805/repositpry/master/muduoZ/resources/UML_Class_Graph.png)
-
-![Image text](https://raw.github.com/a504644805/repositpry/muduoZ/master/resources/UML_Class_Graph.png)
-
-![Image text](https://raw.githubusercontent.com/a504644805/muduoZ/master/resources/UML_Class_Graph.png)
-
-![2023-03-06_153218](C:\Users\xiang\Pictures\screenShot\2023-03-06_153218.png)
+![Image text](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/UML_Class_Graph.png)
 
 # 2. 几点心得
 
@@ -88,11 +82,11 @@ First flush then Destruct buffer !!! So cookie\_=bufferEnd means invalid buffer
 
 单线程
 
-![image-20230306153018332](C:\Users\xiang\AppData\Roaming\Typora\typora-user-images\image-20230306153018332.png)
+![image-20230306153018332](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
 
 多线程
 
-![image-20230306153030257](C:\Users\xiang\AppData\Roaming\Typora\typora-user-images\image-20230306153030257.png)
+![image-20230306153030257](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
 
 ## 3.2 和nginx比
 
