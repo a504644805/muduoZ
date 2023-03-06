@@ -7,11 +7,11 @@ muduoZ
 [![License](https://img.shields.io/badge/license-%20%20BSD%203%20clause-yellow.svg?style=flat)](LICENSE)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
-# 0. 写在前面
+## 0. 写在前面
 
 这是一个基于C++11的muduo网络库。
 
-# 1. 项目概述
+## 1. 项目概述
 
 在阅读完muduo的源码，并通过单步调试对其有一定理解后，出于学习和更深入地理解muduo，笔者重写了muduoZ网络库，其相比muduo主要有如下特点
 
@@ -27,7 +27,7 @@ muduoZ
 
 6.相比muduo，muduoZ只重写了核心部分。没有实现诸如[TimeZone](https://github.com/chenshuo/muduo/blob/master/muduo/base/TimeZone.cc)的辅助类。
 
-## 1.1 总览
+### 1.1 总览
 
 muduo是由<span class="underline">chen shuo</span>所写基于Reactor模式的C++网络库。UML类图如下所示（为突出重点，只画出核心类及各类的核心成员）。
 
@@ -43,11 +43,11 @@ muduo是由<span class="underline">chen shuo</span>所写基于Reactor模式的C
 
 ![Image text](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/UML_Class_Graph.png)
 
-# 2. 几点心得
+## 2. 几点心得
 
 关于muduo，陈硕以及众多博客都有了很多见解，在此就不重复前人的发言了。挑几点我认为比较重要但很少见人（至今没看到，或者说讲得不够具体丰富）说起的理解：
 
-## 2.1 Channel==黏合剂
+### 2.1 Channel==黏合剂
 
 要深刻理解这三部分之间的关联，关键是把握Channel类作为**\"黏合剂\"**的本质。
 
@@ -61,25 +61,25 @@ muduo是由<span class="underline">chen shuo</span>所写基于Reactor模式的C
 
 2.Channel的拥有者负责Channel的创建、配置、注册、注销这一系列动作。
 
-## 2.2 如何优雅地结束
+### 2.2 如何优雅地结束
 
 如陈硕和evpp所言，优雅的结束往往比endless的loop更难。
 
 更确切得说：要实现优雅的结束，需要在endless loop的基础上，考虑更多的东西。介绍**状态机**
 
-## 2.3 一条日志消息都别想跑
+### 2.3 一条日志消息都别想跑
 
 First flush then Destruct buffer !!! So cookie\_=bufferEnd means invalid buffer
 
-## 2.4 别被回调绕晕了
+### 2.4 别被回调绕晕了
 
 这个本来没打算写的，无意中看见知乎的一个评论，仔细想想初看muduo确实花了一点时间捋清楚里面的回调逻辑，所以一并写了吧
 
-## 2.5 为何要tie
+### 2.5 为何要tie
 
 在重写muduo时，我有一条原则：遇见自己难以理解的手法，在查阅资料无果后，先标注，然后按照自己的理解去写而不是原样照搬。这虽然让我在吃了不少苦头（调试程序的时间更久了，刚写完作性能测试发现比muduo差了三倍，花了几天才找到所有病症），但收获也不少，理解为何要tie就是收获之一。
 
-# 3. 性能评测
+## 3. 性能评测
 
 性能优化
 
@@ -87,7 +87,7 @@ First flush then Destruct buffer !!! So cookie\_=bufferEnd means invalid buffer
 
 2\.
 
-## 3.1 和muduo比
+### 3.1 和muduo比
 
 单线程
 
@@ -97,7 +97,7 @@ First flush then Destruct buffer !!! So cookie\_=bufferEnd means invalid buffer
 
 ![image-20230306153030257](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
 
-## 3.2 和nginx比
+### 3.2 和nginx比
 
 使用了Apache Benchmark做了压测，**与nginx对比**
 
@@ -157,7 +157,7 @@ http {
 }
 ```
 
-# 总结
+## 总结
 
 感谢硕哥，如采访所说，muduo用意
 
