@@ -10,7 +10,7 @@ TcpConnection::~TcpConnection() {
     // destroy socket RAII
 }
 
-void TcpConnection::connEstablished() {  // called by TcpServer
+void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
     channel_->set_onReadableCb_(std::bind(&TcpConnection::handleRead, this));
     channel_->set_onWriteableCb_(std::bind(&TcpConnection::handleWrite, this));
     channel_->set_onCloseCb_(std::bind(&TcpConnection::handleClose, this));

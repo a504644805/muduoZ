@@ -43,6 +43,7 @@ class EventLoop : boost::noncopyable {
    private:
     int threadId_;
     Poller poller_;
+    static const int kPollTimeMs = 10000;
 
     std::unique_ptr<TimerQueue> timerQueue_;
 

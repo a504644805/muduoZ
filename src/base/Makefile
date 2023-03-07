@@ -1,4 +1,4 @@
-CXXFLAGS = -c -g -O0 -Wall -Wextra -Werror \
+CXXFLAGS = -c -g -Wall -O0 -Wextra -Werror \
 	   -Wconversion -Wno-unused-parameter \
 	   -Wold-style-cast -Woverloaded-virtual \
 	   -Wpointer-arith -Wshadow -Wwrite-strings \

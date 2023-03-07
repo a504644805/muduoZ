@@ -152,6 +152,7 @@ void Session::onClose(const TcpConnectionPtr& conn) {
 
 extern AsyncLogging g_asynclogging;
 int main(int argc, char* argv[]) {
+    assert(1 == 2);
     if (argc < 7) {  // FIXME: should be !=7. but to debug in vscode we use < 7
         fprintf(stderr, "Usage: client <host_ip> <port> <threads> <blocksize> ");
         fprintf(stderr, "<sessions> <time>\n");

@@ -40,7 +40,10 @@ class FixedBuffer {
     char* current() const { return cur; }
     void addCurrent(size_t len) { cur += len; }
 
+    void setCookie(void (*cookie)()) { cookie_ = cookie; }
+
    private:
+    void (*cookie_)();  // cookie should be placed before data
     char data[SIZE];
     char* cur;
 };
@@ -57,11 +60,10 @@ class FixedBufferWithCookie
                    // same cookie as AsyncLogging, which may
                    // confuse us
    public:
-    FixedBufferWithCookie() { cookie = cookieStart; }
-    ~FixedBufferWithCookie() { cookie = cookieEnd; }
+    FixedBufferWithCookie() { this->setCookie(cookieStart); }
+    ~FixedBufferWithCookie() { this->setCookie(cookieEnd); }
 
    private:
-    void (*cookie)();
     static void cookieStart(){};
     static void cookieEnd(){};
 };

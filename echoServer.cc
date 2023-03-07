@@ -59,6 +59,10 @@ int main() {
 
     LOG_INFO << "pid = " << getpid() << ", tid = " << CurrentThread::getTid();
 
+    int a=0;
+    int b=2/a;
+    b++;
+
     EventLoop loop;
     SockAddrIn listenAddr(2007);
     EchoServer server(&loop, listenAddr);

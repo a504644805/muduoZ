@@ -10,7 +10,6 @@ CXXFLAGS = -g -O0 -Wall -Wextra -Werror \
 	   -march=native -rdynamic \
 	   -I$(MUDUO_INCLUDE_1) \
 	   -I$(MUDUO_INCLUDE_2)
-	
 
 LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase -lpthread
 
@@ -26,4 +25,8 @@ src:
 this:
 	g++ $(CXXFLAGS) -o pingpongServer pingpongServer.cc $(LDFLAGS)
 	g++ $(CXXFLAGS) -o pingpongClient pingpongClient.cc $(LDFLAGS)
+
+echo: 
+	g++ $(CXXFLAGS) -o echo echoServer.cc $(LDFLAGS)
+
 .PHONY: all clean

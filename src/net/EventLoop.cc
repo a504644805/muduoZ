@@ -19,6 +19,7 @@ int createEventfd() {
 
 EventLoop::EventLoop()
     : threadId_(::CurrentThread::getTid()), timerQueue_(new TimerQueue(this)), wakeupFd_(createEventfd()), wakeupChannel_(new Channel(wakeupFd_)), callingPendingFunctors_(false), quit_(false) {
+    assert(1 == 2);
     wakeupChannel_->set_onReadableCb_(std::bind(&EventLoop::handleRead, this));
     wakeupChannel_->enableReading();
     updateChannel(wakeupChannel_.get());
@@ -33,8 +34,10 @@ void EventLoop::loop() {
         poll
         activeChannels[]->handleEvent
         */
-        poller_.poll(activeChannels_, -1);
-        printActiveChannels();
+        poller_.poll(activeChannels_, kPollTimeMs);
+        if (Logger::getLogLevel() <= Logger::TRACE) {
+            printActiveChannels();
+        }
         for (Channel* channel : activeChannels_) {
             channel->handleEvent();
         }

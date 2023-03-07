@@ -98,8 +98,8 @@ void TimerQueue::addTimer(const Timer::TimerCallback& cb, Timestamp expiration_t
         earlistExpirationTimeWillChange = true;
 
     Timer* timer = new Timer(cb, expiration_time);
-    assert(timerSet_.insert({expiration_time, timer}).second == true);
-
+    int ret = timerSet_.insert({expiration_time, timer}).second;
+    assert(ret == true);
     if (earlistExpirationTimeWillChange) {
         assert(timerSet_.begin()->first == expiration_time);
         muduoZ::detail::resetTimerfd(timerfd_, expiration_time);
