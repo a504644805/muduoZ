@@ -47,7 +47,7 @@ muduo是由[chen shuo](https://github.com/chenshuo)所写基于Reactor架构的�
 
 Server/Client则通过Acceptor/Connector来进行连接的接收/发起。其中Server可以管理多条连接（TcpConnection），Client则最多只对应一条连接。TcpConnection、Acceptor、Connector都会通过Channel来接入Reactor框架（2.1 对如何接入进行了介绍）。
 
-![image-20230307201306560](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/UML_CLASS_GRAPH.png)
+![image-20230307201306560](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/UML_Class_Graph.png)
 
 ## 2. 几点心得
 
