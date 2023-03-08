@@ -6,6 +6,7 @@
 #include <stdio.h>  // snprintf
 #include <sys/socket.h>
 #include <sys/types.h>
+#include <unistd.h>
 
 #include "Channel.h"
 #include "SockAddrIn.h"

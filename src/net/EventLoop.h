@@ -2,20 +2,20 @@
 #define MUDUOZ_NET_EVENTLOOP_H
 #include <stdio.h>
 
-#include <boost/noncopyable.hpp>
 #include <memory>
 #include <mutex>
 
 #include "CurrentThread.h"
 #include "Poller.h"
 #include "Timer.h"
+#include "noncopyable.h"
 
 class Channel;
 class TimerQueue;
 using namespace muduoZ;
 // one loop per thread
 // TODO: auto check when one thread create >1 loop (via __thread)
-class EventLoop : boost::noncopyable {
+class EventLoop : muduoZ::noncopyable {
    public:
     typedef std::function<void()> Functor;
     EventLoop();

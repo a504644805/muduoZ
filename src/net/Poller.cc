@@ -1,5 +1,7 @@
 #include "Poller.h"
 
+#include <unistd.h>
+
 #include "Channel.h"
 
 Poller::Poller() {
@@ -7,7 +9,7 @@ Poller::Poller() {
         LOG_SYSFATAL << "epoll_create1 failed";
 }
 Poller::~Poller() {
-    if (close(epollfd_) < 0)
+    if (::close(epollfd_) < 0)
         LOG_SYSERR << "close epollfd_ failed";
 }
 

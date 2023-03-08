@@ -1,17 +1,17 @@
 #ifndef MUDUOZ_SRC_NET_CONNECTOR_H
 #define MUDUOZ_SRC_NET_CONNECTOR_H
 
-#include <boost/noncopyable.hpp>
 #include <functional>
 #include <memory>
 
 #include "SockAddrIn.h"
+#include "noncopyable.h"
 
 // TODO:support retry
 class Channel;
 class SockAddrIn;
 class EventLoop;
-class Connector : public boost::noncopyable {
+class Connector : muduoZ::noncopyable {
    public:
     typedef std::function<void(int)> NewConnecitonCb;
     Connector(const SockAddrIn& serverAddr, EventLoop* loop);

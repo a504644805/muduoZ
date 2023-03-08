@@ -1,7 +1,6 @@
 #ifndef MUDUOZ_SRC_NET_TIMERQUEUE_H
 #define MUDUOZ_SRC_NET_TIMERQUEUE_H
 
-#include <boost/noncopyable.hpp>
 #include <functional>
 #include <memory>
 #include <set>
@@ -9,11 +8,12 @@
 
 #include "Timer.h"
 #include "Timestamp.h"
+#include "noncopyable.h"
 class Channel;
 class EventLoop;
 // TODO:support repeat timer
 // TODO:support cancel
-class TimerQueue : public boost::noncopyable {
+class TimerQueue : muduoZ::noncopyable {
    public:
     // FIXME:Use unique_ptr instead of raw pointer. so we don't need to delete
     // muduo: This requires heterogeneous comparison lookup (N3465) from C++14. so that we can find an T* in a set<unique_ptr<T>>.

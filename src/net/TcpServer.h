@@ -1,17 +1,17 @@
 #ifndef MUDUOZ_SRC_NET_TCPSERVER_H
 #define MUDUOZ_SRC_NET_TCPSERVER_H
 
-#include <boost/noncopyable.hpp>
 #include <functional>
 #include <memory>
 #include <unordered_set>
 
 #include "Acceptor.h"
 #include "callback.h"
+#include "noncopyable.h"
 class TcpConnection;
 class Buffer;
 class EventLoop;
-class TcpServer : public boost::noncopyable {
+class TcpServer : muduoZ::noncopyable {
    public:
     TcpServer(SockAddrIn& bindAddr, EventLoop* loop);
     ~TcpServer();

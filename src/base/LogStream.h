@@ -1,10 +1,9 @@
 #ifndef MUDUOZ_SRC_BASE_LOGSTREAM_H
 #define MUDUOZ_SRC_BASE_LOGSTREAM_H
 
-#include <boost/noncopyable.hpp>
-
 #include "AsyncLogging.h"
-class LogStream : boost::noncopyable {
+#include "noncopyable.h"
+class LogStream : muduoZ::noncopyable {
    public:
     LogStream() : overLen(false) {}
     ~LogStream() {}

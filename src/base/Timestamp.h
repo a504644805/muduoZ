@@ -1,9 +1,7 @@
 #ifndef MUDUOZ_SRC_BASE_TIMESTAMP_H
 #define MUDUOZ_SRC_BASE_TIMESTAMP_H
-
-#include <boost/operators.hpp>
-class Timestamp : public boost::less_than_comparable<Timestamp>,
-                  public boost::equality_comparable<Timestamp> {
+#include <string>
+class Timestamp {
    public:
     Timestamp() : microseconds_(0) {}
     Timestamp(int64_t microseconds) : microseconds_(microseconds) {}
@@ -22,6 +20,10 @@ class Timestamp : public boost::less_than_comparable<Timestamp>,
 
 bool operator<(Timestamp lhs, Timestamp rhs);
 bool operator==(Timestamp lhs, Timestamp rhs);
+inline bool operator>(Timestamp x, Timestamp y) { return y < x; }
+inline bool operator<=(Timestamp x, Timestamp y) { return !static_cast<bool>(y < x); }
+inline bool operator>=(Timestamp x, Timestamp y) { return !static_cast<bool>(x < y); }
+inline bool operator!=(Timestamp x, Timestamp y) { return !static_cast<bool>(x == y); }
 
 // copy from mudup
 inline Timestamp addTime(Timestamp timestamp, double seconds) {

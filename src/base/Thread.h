@@ -4,11 +4,11 @@
 #include <assert.h>
 #include <pthread.h>
 
-#include <boost/noncopyable.hpp>
 #include <functional>
 
 #include "Timestamp.h"
-class Thread : boost::noncopyable {
+#include "noncopyable.h"
+class Thread : muduoZ::noncopyable {
    public:
     typedef std::function<void()> ThreadFunc;  // we don't use void*(void*) as threadFunc type. User can use "function + bind" to pass argument and transfer result.
     explicit Thread(ThreadFunc func) : func_(func), started_(false), joined_(false) {

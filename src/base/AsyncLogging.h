@@ -6,7 +6,6 @@
 #include <sys/types.h>
 #include <sys/uio.h>
 
-#include <boost/noncopyable.hpp>
 #include <cassert>
 #include <chrono>
 #include <condition_variable>
@@ -18,6 +17,7 @@
 
 #include "ClangSpec.h"
 #include "Thread.h"
+#include "noncopyable.h"
 namespace muduoZ {
 namespace detail {
 template <int SIZE>
@@ -70,7 +70,7 @@ class FixedBufferWithCookie
 }  // namespace detail
 }  // namespace muduoZ
 
-class AsyncLogging : boost::noncopyable {
+class AsyncLogging : muduoZ::noncopyable {
    public:
     AsyncLogging() : curBufPtr(new Buffer), thread(std::bind(&AsyncLogging::threadFunc, this)), started_(false), quit_(false) {}
     ~AsyncLogging() {}

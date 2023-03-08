@@ -3,10 +3,10 @@
 
 #include <sys/epoll.h>
 
-#include <boost/noncopyable.hpp>
 #include <unordered_map>
 #include <vector>
 
+#include "noncopyable.h"
 class Channel;
 /*
 Usage of epoll:
@@ -14,7 +14,7 @@ epollfd = epoll_create
 epoll_wait
 epoll_ctl //used to add/mod/del epoll_event
 */
-class Poller : boost::noncopyable {
+class Poller : muduoZ::noncopyable {
    public:
     typedef std::vector<Channel*> ChannelList;
     Poller();

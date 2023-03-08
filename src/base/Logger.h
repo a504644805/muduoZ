@@ -1,12 +1,11 @@
 #ifndef MUDUOZ_SRC_BASE_LOGGER_H
 #define MUDUOZ_SRC_BASE_LOGGER_H
 
-#include <boost/noncopyable.hpp>
-
 #include "LogStream.h"
+#include "noncopyable.h"
 /* Usage: LOG_INFO << ... ; */
 // This file will be included many place, just expose necessary interface(like pimpl)
-class Logger : boost::noncopyable {
+class Logger : muduoZ::noncopyable {
    public:
     enum LogLevel {
         TRACE,

@@ -3,14 +3,14 @@
 #include <poll.h>
 #include <sys/epoll.h>
 
-#include <boost/noncopyable.hpp>
 #include <functional>
 
 #include "Logger.h"
+#include "noncopyable.h"
 class Poller;
 // 负责某个fd的事件分发
 // TODO:目前Channel只支持在Poller中的一次注册和注销。让Channel支持重复注册(If necessary)。
-class Channel : public boost::noncopyable {
+class Channel : muduoZ::noncopyable {
    public:
     typedef std::function<void()> EventCallback;
     Channel(int fd) : fd_(fd), events_(0), revents_(0), tied_(0) {}

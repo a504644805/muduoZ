@@ -6,12 +6,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 
-#include <boost/noncopyable.hpp>
-
 #include "Channel.h"
 #include "Socket.h"
+#include "noncopyable.h"
 class EventLoop;
-class Acceptor : boost::noncopyable {
+class Acceptor : muduoZ::noncopyable {
    public:
     typedef std::function<void(int)> NewConnectionCb;
 

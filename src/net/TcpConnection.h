@@ -1,15 +1,15 @@
 #ifndef MUDUOZ_SRC_NET_TCPCONNECTION_H
 #define MUDUOZ_SRC_NET_TCPCONNECTION_H
 
-#include <boost/noncopyable.hpp>
 #include <memory>
 
 #include "Buffer.h"
 #include "callback.h"
+#include "noncopyable.h"
 class Channel;
 class Socket;
 class EventLoop;
-class TcpConnection : public boost::noncopyable, public std::enable_shared_from_this<TcpConnection> {
+class TcpConnection : muduoZ::noncopyable, public std::enable_shared_from_this<TcpConnection> {
    public:
     typedef std::function<void(const TcpConnectionPtr&)> CbForTcpServer_onClose;
     TcpConnection(int sockfd, EventLoop* loop);

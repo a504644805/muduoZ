@@ -1,16 +1,15 @@
 #ifndef MUDUOZ_SRC_NET_TCPCLIENT_H
 #define MUDUOZ_SRC_NET_TCPCLIENT_H
 
-#include <boost/noncopyable.hpp>
 #include <memory>
 
 #include "callback.h"
-
+#include "noncopyable.h"
 class Connector;
 class EventLoop;
 class SockAddrIn;
 // TODO: support retry after disconnect
-class TcpClient : boost::noncopyable {
+class TcpClient : muduoZ::noncopyable {
    public:
     TcpClient(const SockAddrIn& serverAddr, EventLoop* loop);
     ~TcpClient();
