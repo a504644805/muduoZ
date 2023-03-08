@@ -28,7 +28,7 @@ Sol:
 1. First flush then Destruct buffer !!! So cookie_=bufferEnd means invalid buffer
 2. Because of 1, buffer has not been flushed has cookie_=bufferStart, we can find them in core file:
     (1) gdb a.out core
-    (2) info address muduoZ::detail::FixedBuffer<4000000>::bufferStart #get the virtual address of bufferStart
+    (2) info address muduoZ::detail::FixedBufferWithCookie<4000000>::cookieStart() #get the virtual address of bufferStart
     (3) xxd core #search the virtual address
 
 Instead of realize AppendFile class and LogFile class. we directly use file operation. We use writev instead of fwrite for less system call. We flush then destroy buffer to make sure info not Miss. Maybe we can do a test about the efficiency of fopen+fwrite and open+writev
