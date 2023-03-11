@@ -54,6 +54,7 @@
         "cerrno": "cpp",
         "map": "cpp",
         "set": "cpp",
-        "cinttypes": "cpp"
+        "cinttypes": "cpp",
+        "any": "cpp"
     }
 }

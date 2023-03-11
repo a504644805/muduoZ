@@ -8,7 +8,7 @@
             "name": "(gdb) Launch",
             "type": "cppdbg",
             "request": "launch",
-            "program": "/home/xy/projects/muduoZ/pingpongServer",
+            "program": "/home/xy/projects/muduoZ/echo",
             "args": [],
             "stopAtEntry": false,
             "cwd": "${fileDirname}",

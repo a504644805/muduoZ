@@ -11,22 +11,21 @@ CXXFLAGS = -g -O0 -Wall -Wextra -Werror \
 	   -I$(MUDUO_INCLUDE_1) \
 	   -I$(MUDUO_INCLUDE_2)
 
-LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase -lpthread
+LDFLAGS = -L$(MUDUO_LIBRARY) -lnet -lbase -pthread
 
 all:
 	make -C ./src/base
 	make -C ./src/net
 	g++ $(CXXFLAGS) -o pingpongServer pingpongServer.cc $(LDFLAGS)
 	g++ $(CXXFLAGS) -o pingpongClient pingpongClient.cc $(LDFLAGS)
-
+	g++ $(CXXFLAGS) -o echo echoServer.cc $(LDFLAGS)
+	g++ $(CXXFLAGS) -o client client.cc $(LDFLAGS)
 src: 	
 	make -C ./src/base
 	make -C ./src/net
 this:
 	g++ $(CXXFLAGS) -o pingpongServer pingpongServer.cc $(LDFLAGS)
 	g++ $(CXXFLAGS) -o pingpongClient pingpongClient.cc $(LDFLAGS)
-
-echo: 
 	g++ $(CXXFLAGS) -o echo echoServer.cc $(LDFLAGS)
-
+	g++ $(CXXFLAGS) -o client client.cc $(LDFLAGS)
 .PHONY: all clean

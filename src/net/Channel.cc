@@ -7,17 +7,18 @@ void Channel::handleEvent() {
         guard = tie_.lock();
         assert(guard);
     }
+    auto nowtime = Timestamp::now().toFormattedString();
     if ((revents_ & EPOLLHUP) && !(revents_ & EPOLLIN)) {  //??? When will this happen.
-        assert(onCloseCb_);
-        onCloseCb_();
+        if (onCloseCb_)
+            onCloseCb_();
     }
     if (revents_ & (EPOLLIN | EPOLLPRI)) {
-        assert(onReadableCb_);
-        onReadableCb_();
+        if (onReadableCb_)
+            onReadableCb_();
     }
     if (revents_ & EPOLLOUT) {
-        assert(onWriteableCb_);
-        onWriteableCb_();
+        if (onWriteableCb_)
+            onWriteableCb_();
     }
     if (revents_ & (~capable_))  // TODO:handle other events
         LOG_SYSFATAL << "Don't know how to handle some of this(these) event(s): " << eventsToString(fd_, revents_).c_str();

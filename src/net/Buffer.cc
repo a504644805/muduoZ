@@ -23,7 +23,7 @@ int Buffer::readFd(int sockfd) {
         writeIdx_ += n;
     } else {
         writeIdx_ = static_cast<int>(data_.size());
-        append(extrabuf, n - writable);
+        append(extrabuf, static_cast<int>(n - writable));
     }
     return n;
 }

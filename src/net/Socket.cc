@@ -58,7 +58,10 @@ int Socket::accept(SockAddrIn* peerAddr) {
 int Socket::read(void* buf, int buflen) {
     int n = static_cast<int>(::read(sockfd_, buf, buflen));  // FIXME:underly error. check all cast stuff
     if (n < 0) {
-        LOG_SYSFATAL << "read failed";
+        if (errno == EAGAIN)
+            ;
+        else
+            LOG_SYSFATAL << "read failed";
     }
     return n;
 }
@@ -66,7 +69,10 @@ int Socket::read(void* buf, int buflen) {
 int Socket::write(const void* buf, int buflen) {
     int n = static_cast<int>(::write(sockfd_, buf, buflen));
     if (n < 0) {
-        LOG_SYSFATAL << "write failed";
+        if (errno == EAGAIN)
+            ;
+        else
+            LOG_SYSFATAL << "write failed";
     }
     return n;
 }

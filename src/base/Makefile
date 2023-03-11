@@ -2,7 +2,7 @@ CXXFLAGS = -c -g -Wall -O0 -Wextra -Werror \
 	   -Wconversion -Wno-unused-parameter \
 	   -Wold-style-cast -Woverloaded-virtual \
 	   -Wpointer-arith -Wshadow -Wwrite-strings \
-	   -march=native -rdynamic -lpthread
+	   -march=native -rdynamic -pthread
 
 all: 
 	g++ $(CXXFLAGS) CurrentThread.cc

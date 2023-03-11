@@ -10,6 +10,7 @@ Connector::Connector(const SockAddrIn& serverAddr, EventLoop* loop)
 Connector::~Connector() {}
 
 void Connector::start() {
+    LOG_TRACE << "::connect is called";
     int rt = muduoZ::socket::connect(sockfd_, serverAddr_);
     assert(rt == -1 && errno == EINPROGRESS);  // TODO:handle different errors
     channel_->set_onWriteableCb_(std::bind(&Connector::handleWrite, this));
@@ -18,7 +19,11 @@ void Connector::start() {
 }
 
 void Connector::handleWrite() {
-    assert(muduoZ::socket::getSocketError(sockfd_) == 0);
+    int err = muduoZ::socket::getSocketError(sockfd_);
+    if (err != 0) {
+        char errnobuf[512];
+        LOG_SYSFATAL << strerror_r(err, errnobuf, sizeof errnobuf);
+    }
     loop_->removeChannel(channel_.get());
     newConnecitonCb_(sockfd_);
     // return to channel::handleEvent()

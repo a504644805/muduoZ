@@ -16,16 +16,21 @@ Poller::~Poller() {
 // TODO:Use vector for activeEvents_ to dynamically expand when there are more events (good for perfromance?)
 void Poller::poll(ChannelList& activeChannels, int timeout) {
     int num = 0;
-    if ((num = epoll_wait(epollfd_, activeEvents_, kMaxevents, timeout)) < 0)
-        LOG_SYSFATAL << "epoll_wait failed";
-
     activeChannels.clear();
-    for (int i = 0; i < num; i++) {
-        Channel* channel = static_cast<Channel*>(activeEvents_[i].data.ptr);
-        assert(channelMap_.find(channel->fd()) != channelMap_.end());
-        assert(channelMap_.find(channel->fd())->second == channel);
-        channel->set_revents(activeEvents_[i].events);
-        activeChannels.push_back(channel);
+    if ((num = epoll_wait(epollfd_, activeEvents_, kMaxevents, timeout)) < 0) {
+        if (errno == EINTR) {
+            ;
+        } else {
+            LOG_SYSFATAL << "epoll_wait failed";
+        }
+    } else {
+        for (int i = 0; i < num; i++) {
+            Channel* channel = static_cast<Channel*>(activeEvents_[i].data.ptr);
+            assert(channelMap_.find(channel->fd()) != channelMap_.end());
+            assert(channelMap_.find(channel->fd())->second == channel);
+            channel->set_revents(activeEvents_[i].events);
+            activeChannels.push_back(channel);
+        }
     }
 }
 

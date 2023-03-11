@@ -20,7 +20,7 @@ void AsyncLogging::append(const char* msg, int len) {
 // 后端定时定量地取数据：把cur和filledBuffers中的Buffer指针取走（不复制内存，减少cs）
 void AsyncLogging::threadFunc() {
     std::string filename = "Log." + Timestamp::now().toFormattedString();
-    int fd = open(filename.c_str(), O_CREAT | O_WRONLY | O_APPEND | O_EXCL | O_CLOEXEC);
+    int fd = open(filename.c_str(), O_CREAT | O_WRONLY | O_APPEND | O_EXCL | O_CLOEXEC, S_IRUSR | S_IWRITE);
     if (fd < 0) {
         fprintf(stderr, "AsyncLogging::threadFunc(Line %d): open failed, errno = %d\n", __LINE__, errno);
         assert(fd >= 0);  // FIXME:terminate the process.(now is Debug version, we simply use assert to terminate)
@@ -49,7 +49,7 @@ void AsyncLogging::threadFunc() {
         struct iovec vec[bufferOverloadThreash_];
         int totalBytesToWrite = 0;
         for (int i = 0; i < iovcnt; i++) {
-            vec[i].iov_base = buffersToWrite[i].get();
+            vec[i].iov_base = const_cast<char*>(buffersToWrite[i]->begin());
             int availBytes = buffersToWrite[i]->len();
             vec[i].iov_len = availBytes;
             totalBytesToWrite += availBytes;

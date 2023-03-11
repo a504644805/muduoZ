@@ -1,13 +1,15 @@
 #ifndef MUDUOZ_SRC_NET_TCPCONNECTION_H
 #define MUDUOZ_SRC_NET_TCPCONNECTION_H
 
+#include <sys/socket.h>
+
 #include <memory>
 
 #include "Buffer.h"
+#include "Socket.h"
 #include "callback.h"
 #include "noncopyable.h"
 class Channel;
-class Socket;
 class EventLoop;
 class TcpConnection : muduoZ::noncopyable, public std::enable_shared_from_this<TcpConnection> {
    public:
@@ -21,6 +23,7 @@ class TcpConnection : muduoZ::noncopyable, public std::enable_shared_from_this<T
     void handleClose();
 
     void send(const char* str, int len);
+    void send(const char* str, size_t len);  // FIXME: Use size_t, ssize_t etc. to replace int.(the whole program need to be modified)
 
     void set_OnConnectionCb(const OnConnectionCb& cb) { onConnectionCb = cb; }
     void set_OnCloseCb(const OnCloseCb& cb) { onCloseCb = cb; }
@@ -32,6 +35,8 @@ class TcpConnection : muduoZ::noncopyable, public std::enable_shared_from_this<T
     void setTcpNoDelay(bool on);
 
     void shutdown();
+    void forceClose() { handleClose(); }
+    void shutdownRead() { assert(::shutdown(socket_->sockfd(), SHUT_RD) == 0); }
 
     EventLoop* loop() { return loop_; }
 

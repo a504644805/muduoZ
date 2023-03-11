@@ -80,6 +80,10 @@ void TcpConnection::send(const char* str, int len) {
         }
     }
 }
+void TcpConnection::send(const char* str, size_t len) {  // FIXME: Use size_t, ssize_t etc. to replace int.(the whole program need to be modified)
+    assert(len <= INT32_MAX);
+    send(str, static_cast<int>(len));
+}
 
 void TcpConnection::setTcpNoDelay(bool on) {
     socket_->setTcpNoDelay(on);

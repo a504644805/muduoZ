@@ -40,7 +40,7 @@ class Channel : muduoZ::noncopyable {
     /// prevent the owner object being destroyed in handleEvent.
     void tie(const std::shared_ptr<void>&);
 
-    bool isWriteing() { return events_ &= EPOLLOUT; }
+    bool isWriteing() { return events_ & EPOLLOUT; }
 
    private:
     int fd_;

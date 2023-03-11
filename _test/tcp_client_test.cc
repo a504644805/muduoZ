@@ -6,6 +6,9 @@
 #include <strings.h>  // bzero()
 #include <sys/socket.h>
 #include <unistd.h>  // read(), write(), close()
+
+#include <string>
+#include <vector>
 #define MAX 80
 #define PORT 8080
 #define SA struct sockaddr
@@ -26,6 +29,16 @@ void func(int sockfd) {
             printf("Client Exit...\n");
             break;
         }
+    }
+}
+using namespace std;
+void testfunc(int sockfd) {
+    string data;
+    int msgSz = 10000;
+    for (int i = 0; i < msgSz; i++)
+        data.push_back('m');
+    ssize_t nwrite = write(sockfd, data.c_str(), data.size());
+    if (nwrite < 0) {
     }
 }
 
