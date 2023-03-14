@@ -15,17 +15,12 @@ muduoZ
 
 在阅读完[muduo](https://github.com/chenshuo/muduo)的源码，并通过单步调试对其有一定理解后，出于学习和更深入地理解muduo，笔者重写了muduo网络库。muduoZ相比muduo主要有如下特点：
 
-1. 去掉了Muduo库中的Boost依赖，完全使用C++标准，如使用std::function<>
-
-2. 没有单独封装Thread，使用C++11引入的std::thread搭配lambda表达式实现工作线程，没有直接使用pthread库。类似的直接使用C++11/17的还有std::atomic，std::any，std::mutex等
-
-3. 在异步日志中，muduo用的是fwrite+flush完成page-cache的写入，muduoZ用的则是writev。相比前者，writev的系统调用次数可以少一些，从而节省操作系统在用户态和内核态之间的切换耗时。
-
-4. 不同于muduo直接把cookie放进FixedBuffer类，muduoZ对FixedBuffer进行了一次派生，让日志系统相关的类使用FixedBufferWithCookie。这样其它非日志系统相关的类如果想使用FixedBuffer，就不会因为也有着一样的cookie，从而和日志消息发生混淆。
-
-5. Buffer部分Muduo库没有提供writeFd方法，本项目加入了writeFd，在处理outputBuffer剩余未发数据时交给Buffer来处理
-
-6. 相比muduo，muduoZ只重写了核心部分。没有实现诸如[TimeZone](https://github.com/chenshuo/muduo/blob/master/muduo/base/TimeZone.cc)的辅助类。
+1. 使用C++11/14/17的一些特性替换muduo原有操作，如使用C++11引入的std::mutex代替muduo的mutex进行RAII的互斥锁操作。
+2. 移除了Muduo库中的Boost依赖。如使用自C++17引入的std::any替代boost::any；移除boost::less_than_comparable，并手动添加了缺失的运算符重载。（参考了boost::less_than_comparable的实现，使新添加的运算符重载是通过<运算符实现的）
+3. 在异步日志中，muduo用的是[fwrite+flush](https://github.com/chenshuo/muduo/blob/f29ca0ebc2f3b0ab61c1be08482a5524334c3d6f/muduo/base/AsyncLogging.cc#L99)完成page-cache的写入，muduoZ用的则是[writev](https://github.com/a504644805/muduoZ/blob/b97289d38e693204a34fc1ec7fc1c31bfd5a3064/src/base/AsyncLogging.cc#L57)。相比前者，writev的系统调用次数可以少一些，从而节省操作系统在用户态和内核态之间的切换耗时。
+4. 在Thread类的实现中，为获得子线程的唯一标识（tid），muduoZ采用[lambda](https://github.com/a504644805/muduoZ/blob/b97289d38e693204a34fc1ec7fc1c31bfd5a3064/src/base/Thread.cc#L6)表达式作为线程函数的实参。相比muduo传入一个[间接](https://github.com/chenshuo/muduo/blob/f29ca0ebc2f3b0ab61c1be08482a5524334c3d6f/muduo/base/Thread.cc#L179)的函数，代码更简洁易懂。同时muduoZ也使用了C++11引入的std::thread进行线程创建等相关操作。
+5. 不同于muduo直接把cookie放进FixedBuffer类，muduoZ对FixedBuffer进行了一次派生，让日志系统相关的类使用FixedBufferWithCookie。这样其它非日志系统相关的类如果想使用FixedBuffer，就不会因为也有着一样的cookie，从而和日志消息发生混淆。
+6. 相比muduo，muduoZ只重写了核心部分。没有实现诸如TimeZone的辅助类。
 
 ### 1.1 总览
 
@@ -111,11 +106,210 @@ Server/Client则通过Acceptor/Connector来进行连接的接收/发起。其中
 
 ### 2.2 如何优雅地结束
 
-如陈硕和evpp所言，优雅的结束往往比endless的loop更难。
+陈硕在《Linux多线程服务端编程》中曾写道：
 
-更确切得说：要实现优雅的结束，需要在endless loop的基础上，考虑更多的东西。介绍**状态机**
+> ”一般来讲数据的删除比新建要复杂，TCP 连接也不例外。关闭连接的流程看上去有点“绕”，根本原因是对象生命期管理的需要“
+
+在由Qihoo360所开发的[evpp](https://github.com/Qihoo360/evpp)网络库中也有提及：
+
+> 我们如此苛刻的追求线程安全，只是为了让一个程序能安静的平稳的退出或Reload。因为我们深刻的理解“编写永远运行的系统，和编写运行一段时间后平静关闭的系统是两码事”，后者要困难的多得多。
+
+如他们所言，优雅的结束往往比endless的loop更难，需要考虑更多的东西。
+
+在muduoZ中，主要涉及的资源释放包括：线程的销毁、内存空间的释放、连接的断开。通过在初始化阶段完成全部子线程的创建，避免了在程序运行期间需要动态创建和销毁线程的烦恼。而内存空间等资源的释放，则借助智能指针，并配合RAII的思想，使对象在析构时自动释放资源。
+
+在这我主要想介绍muduoZ关于连接断开的处理。尝试打通TCP协议、TCP的具体实现（Linux内核中的TCP/IP协议栈）以及应用开发者应该处理的事件（采用epoll观察和处理连接断开时相关的I/O事件）三者间的联系。下述源码的内核版本皆为 **Linux 5.4.0**。
+
+```C++
+                	          +---------+                              
+                              |  ESTAB  |                              
+                              +---------+                              
+                       CLOSE    |     |    rcv FIN                     
+                      -------   |     |    -------                     
+ +---------+          snd FIN  /       \   snd ACK          +---------+
+ |  FIN    |<-----------------           ------------------>|  CLOSE  |
+ | WAIT-1  |------------------                              |   WAIT  |
+ +---------+          rcv FIN  \                            +---------+
+   | rcv ACK of FIN   -------   |                            CLOSE  |  
+   | --------------   snd ACK   |                           ------- |  
+   V        x                   V                           snd FIN V  
+ +---------+                  +---------+                   +---------+
+ |FINWAIT-2|                  | CLOSING |                   | LAST-ACK|
+ +---------+                  +---------+                   +---------+
+   |                rcv ACK of FIN |                 rcv ACK of FIN |  
+   |  rcv FIN       -------------- |    Timeout=2MSL -------------- |  
+   |  -------              x       V    ------------        x       V  
+    \ snd ACK                 +---------+delete TCB         +---------+
+     ------------------------>|TIME WAIT|------------------>| CLOSED  |
+                              +---------+                   +---------+
+```
+
+上图摘自[RFC793](https://www.ietf.org/rfc/rfc793.txt)的TCP状态转换图，我们只关注涉及连接断开涉及的部分。可以发现其涉及的 \"连接断开起始条件\" 只包括发送FIN或接收FIN两种情况，然后在实际场景中，当我们的服务器和客户端建立连接后，客户端可能执行的涉及连接断开的操作包括：
+
+* 调用close断开连接
+* 调用shutdown关闭 读和 (或) 写
+* 电源掉电，客户端什么都没来得及发送（通过设置TCP的KeepAlive标志位，服务端即可侦测到异常并断开连接）
+
+下面介绍前两种情况。
+
+第一种情况下，
+
+**当客户端**调用close，如果此时socket的receive buffer还有未读数据，则会将状态直接置为CLOSE并发送RST报文关闭连接；如果数据已经读完同时未开启SOCK_LINGER标志，则会调用`tcp_send_fin`发送FIN报文，此时状态变为FIN_WAIT-1。这里介绍前一种情况，后一种情况在 \"调用shutdown关闭 读和 (或) 写\" 中会介绍。
+
+```c
+void tcp_close(struct sock *sk, long timeout){
+    ......
+	/* As outlined in RFC 2525, section 2.17, we send a RST here because
+	 * data was lost. To witness the awful effects of the old behavior of
+	 * always doing a FIN, run an older 2.1.x kernel or 2.0.x, start a bulk
+	 * GET in an FTP client, suspend the process, wait for the client to
+	 * advertise a zero window, then kill -9 the FTP client, wheee...
+	 * Note: timeout is always zero in such a case.
+	 */
+	if (unlikely(tcp_sk(sk)->repair)) {
+		sk->sk_prot->disconnect(sk, 0);
+	} else if (data_was_unread) {
+		/* Unread data was tossed, zap the connection. */
+		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPABORTONCLOSE);
+		tcp_set_state(sk, TCP_CLOSE);
+		tcp_send_active_reset(sk, sk->sk_allocation);
+	} else if (sock_flag(sk, SOCK_LINGER) && !sk->sk_lingertime) {
+		/* Check zero linger _after_ checking for unread data. */
+		sk->sk_prot->disconnect(sk, 0);
+		NET_INC_STATS(sock_net(sk), LINUX_MIB_TCPABORTONDATA);
+	} else if (tcp_close_state(sk)) {
+		tcp_send_fin(sk);
+	}
+	......
+}
+```
+
+**当服务端**收到来自客户端的RST报文，内核会依次调用如下函数：
+
+```
+tcp_v4_rcv
+	-> tcp_v4_do_rcv
+		-> tcp_rcv_established
+			-> tcp_validate_incoming
+				-> tcp_reset
+```
+
+在`tcp_reset`中，如果此时TCP连接处于ESTABLISH状态，表示连接首次收到RST，此时会将错误置为ECONNRESET。此时如果用户对该socket fd调用write函数，errno会置为104（ECONNRESET）。随后`tcp_done`被调用，连接被置为CLOSE状态。
+
+```C
+/* When we get a reset we do this. */
+void tcp_reset(struct sock *sk)
+{
+	trace_tcp_receive_reset(sk);
+
+	/* We want the right error as BSD sees it (and indeed as we do). */
+	switch (sk->sk_state) {
+	case TCP_SYN_SENT:
+		sk->sk_err = ECONNREFUSED;
+		break;
+	case TCP_CLOSE_WAIT:
+		sk->sk_err = EPIPE;
+		break;
+	case TCP_CLOSE:
+		return;
+	default:
+		sk->sk_err = ECONNRESET;
+	}
+	......
+	tcp_done(sk);
+    ......
+}
+```
+
+**对应地，在服务端，muduoZ**所调用的epoll会返回EPOLLHUP事件，于是调用TcpConnection::handleClose函数来进行资源释放的相关操作。
 
 
+
+第二种情况下，
+
+当客户端调用`shutdown (fd, SHUT_RD)`，此时客户端不会向服务端发送FIN信息，只是当用户调用read会报错。
+
+**当客户端**调用**`shutdown (fd, SHUT_WR)`**，协议栈的`tcp_shutdown`函数会通过`tcp_close_state`函数将状态置为FIN_WAIT-1，并发送FIN报文。
+
+```C
+void tcp_shutdown(struct sock *sk, int how)
+{
+	......
+	if ((1 << sk->sk_state) &
+	    (TCPF_ESTABLISHED | TCPF_SYN_SENT |
+	     TCPF_SYN_RECV | TCPF_CLOSE_WAIT)) {
+		/* Clear out any half completed packets.  FIN if needed. */
+		if (tcp_close_state(sk))
+			tcp_send_fin(sk);
+	}
+}
+```
+
+**当服务端**收到来自客户端的RST报文，内核会依次调用如下函数：
+
+```C
+tcp_v4_rcv
+	-> tcp_v4_do_rcv
+		-> tcp_rcv_established
+			-> tcp_data_queue
+				-> tcp_fin
+			-> tcp_ack_snd_check
+```
+
+在`tcp_fin`中，会将TCP连接置于CLOSE_WAIT状态，等待应用层关闭tcp连接。
+
+可以看到在`tcp_fin`还进行了`sk->sk_shutdown |= RCV_SHUTDOWN`，表示读端关闭。对应地，客户端在调用`shutdown (fd, SHUT_WR)`时会进行`sk->sk_shutdown |= SEND_SHUTDOWN`，表示写端关闭。
+
+```C
+void tcp_fin(struct sock *sk)
+{
+	struct tcp_sock *tp = tcp_sk(sk);
+
+	inet_csk_schedule_ack(sk);
+
+	sk->sk_shutdown |= RCV_SHUTDOWN;
+	sock_set_flag(sk, SOCK_DONE);
+
+	switch (sk->sk_state) {
+	case TCP_SYN_RECV:
+	case TCP_ESTABLISHED:
+		/* Move to CLOSE_WAIT */
+		tcp_set_state(sk, TCP_CLOSE_WAIT);
+		inet_csk_enter_pingpong_mode(sk);
+		break;
+```
+
+随后`tcp_rcv_established`会调用`tcp_ack_snd_check`发送ack。
+
+**当客户端**收到来自服务端的ack回复，会由FIN_WAIT-1状态变为FIN_WAIT-2，调用链如下：
+
+```C
+tcp_v4_rcv
+	-> tcp_v4_do_rcv
+		-> tcp_rcv_state_process
+```
+
+**现在切换到服务端的muduoZ视角**。此时由客服端调用`shutdown (fd, SHUT_WR)`而引发的一系列连锁效应已经由TCP/IP协议栈完成。客户端处于FIN_WAIT-2状态，等着FIN报文的到来。服务端处于CLOSE_WAIT状态，等着应用层关闭tcp连接。
+
+此时muduoZ有两种方式得知此状态
+
+1. 通过epoll返回的EPOLLRDHUP
+
+2. epoll会返回EPOLLIN，此时调用read会返回0
+
+一旦感知到该状态，muduoZ就会调用TcpConnection::handleClose函数进入资源释放的流程。当TcpConnection析构时，其拥有的由RAII机制管理的Socket对象会调用**close**函数关闭连接。
+
+随后会进行（涉及到的核心函数在上面已有罗列，这儿就不赘述代码了）：
+
+* 服务端会发送FIN报文并进入LAST_ACK状态。
+* 客户端收到FIN报文后先回复ack，随后进入TIME_WAIT状态并开启TIME_WAIT定时。
+* 服务端收到ack后进入CLOSE状态，客户端定时器超时后也进入CLOSE状态。
+
+以上便是从协议、Linux TCP协议栈的实现、开发人员三个角度，自底向上地针对TCP \"连接断开\" 所展开的叙述。怎样辨识连接断开的发生，连接断开时又应该做什么。这个在编写muduoZ时始终困扰我的问题终于有了一些解答。也希望自己能早日达到硕哥在书中提到的网络编程的三个层次：
+
+> * 读过教程和文档，做过练习
+> * 熟悉本系统 TCP/IP 协议栈的脾气
+> * 自己写过一个简单的 TCP/IP stack
 
 ### 2.3 一条日志消息都别想跑
 
@@ -266,81 +460,64 @@ void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
 
 ## 3. 性能评测
 
-性能优化
+惭愧，碍于时间有限，笔者虽尝试了一些方法来对muduo进行性能优化，但未发现可以被觉察到（noticeable）的性能提升。
 
-1\.
+不过，由于陈硕对muduo进行性能测试的版本已早在2011年，网上对于muduo和其它网络库的性能测试也较少（[evpp](https://github.com/Qihoo360/evpp/blob/master/docs/benchmark_throughput_vs_muduo_cn.md)在2016年左右进行了相关的性能测试，但主要是针对evpp库和其它库的比较），因此将最新版本的muduo和其它库进行一次横向比较，看看当下各个库之间的性能谁优谁劣；再将各个库的当前版本和过去版本进行一次纵向比较，看看新版本有多少 \"长进\" ，想来还是挺有意思的。
 
-2\.
+### 3.1 pingpong测试
 
-### 3.1 和muduo比
+引用下[zieckey](https://github.com/zieckey)对pingpong测试的描述：
 
-单线程
+> 简单地说，ping pong 协议是客户端和服务器都实现 echo 协议。当 TCP 连接建立时，客户端向服务器发送一些数据，服务器会 echo 回这些数据，然后客户端再 echo 回服务器。这些数据就会像乒乓球一样在客户端和服务器之间来回传送，直到有一方断开连接为止。这是用来测试吞吐量的常用办法。
+
+测试对象：
+
+* [muduo-2.0.3](https://github.com/chenshuo/muduo/tree/v2.0.3)
+
+* [asio-1.26.0](https://github.com/chriskohlhoff/asio/tree/asio-1-26-0)
+
+* [libevent-2.1.12](https://github.com/libevent/libevent/tree/release-2.1.12-stable)
+
+测试代码：
+
+* muduo的测试代码使用陈硕的实现 https://github.com/chenshuo/muduo/tree/master/examples/pingpong
+
+* asio的测试代码使用 [huyuguang](https://github.com/huyuguang) 的实现 https://github.com/huyuguang/asio_benchmark
+
+  这里没有采用asio官方提供的pingpong测试代码，是因为其并没有充分发挥asio的特性从而影响了asio的性能发挥。援引下陈硕在书中的话：
+
+  > muduo 出乎意料地比 asio 性能优越，我想主要得益于其简单的设计和简洁的代码。asio在多线程测试中表现不佳，我猜测其主要原因是测试代码只使用了一个io_service，如果改用"io_service per CPU"的话，其性能应该有所提高。我对 asio 的了解程度仅限于能读懂其代码，希望能有 asio 高手编写“io_service per CPU"的 ping pong测试，以便与muduo做一个公平的比较。
+
+* libevent的测试代码取自 https://github.com/Qihoo360/evpp/tree/master/benchmark/throughput/libevent。这一节仅测试了libevent单线程下的性能表现，由于libevent的表现不佳，因此为公平起见，在下一节又用ibevent2 自带的性能测试程序（击鼓传花）对比了 muduo和 libevent2的性能表现。
+
+测试环境：
+
+* Linux ubuntu 5.4.0-144-generic x86_64 
+* gcc version 7.5.0，编译时的优化统一采用 -O3
+
+* 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz 
+
+* 8-cores and 4-GB RAM are allocated in VMware 17.0.0
+
+**单线程测试结果：**
 
 ![image-20230306153018332](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
+
+如上图，测试的
+
+由于本机的CPU有八个核心，为充分利用CPU资源可以给客户端和服务端程序
+
+
 
 多线程
 
 ![image-20230306153030257](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
 
-### 3.2 和nginx比
+如上图，对客户端和服务端分别启用四个线程进行了性能对比（由于本机为八核心CPU，因此总共八个线程可以把
 
-使用了Apache Benchmark做了压测，**与nginx对比**
+### 3.2 击鼓传花（vs libevent2）
 
-```
-Concurrency Level:      1000
-Time taken for tests:   14.852 seconds
-Complete requests:      1000000
-Failed requests:        0
-Keep-Alive requests:    1000000
-Total transferred:      118000000 bytes
-HTML transferred:       14000000 bytes
-Requests per second:    67330.24 [#/sec] (mean)
-Time per request:       14.852 [ms] (mean)
-Time per request:       0.015 [ms] (mean, across all concurrent requests)
-Transfer rate:          7758.76 [Kbytes/sec] received
-```
 
-```
-Concurrency Level:      1000
-Time taken for tests:   48.376 seconds
-Complete requests:      1000000
-Failed requests:        0
-Keep-Alive requests:    1000000
-Total transferred:      118000000 bytes
-HTML transferred:       14000000 bytes
-Requests per second:    20671.60 [#/sec] (mean)
-Time per request:       48.376 [ms] (mean)
-Time per request:       0.048 [ms] (mean, across all concurrent requests)
-Transfer rate:          2382.08 [Kbytes/sec] received
-```
-
-```
-#user  nobody;
-worker_processes  4;
-events {
-    worker_connections  10240;
-}
-http {
-    include       /usr/local/openresty/nginx/conf/mime.types;
-    default_type  application/octet-stream;
-    access_log  off;
-    sendfile       on;
-    tcp_nopush     on;
-    keepalive_timeout  65;
-    server {
-        listen       8001;
-        server_name  localhost;
-        location / {
-            root   html;
-            index  index.html index.html;
-        }
-        location /hello {
-          default_type text/plain;
-          echo "hello, world!";
-        }
-    }
-}
-```
 
 ## 总结
 
