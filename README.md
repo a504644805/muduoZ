@@ -3,7 +3,7 @@ muduoZ
 
 <a href="https://github.com/Qihoo360/evpp/releases"><img src="https://img.shields.io/github/release/Qihoo360/evpp.svg" alt="Github release"></a>
 <a href="https://travis-ci.org/Qihoo360/evpp"><img src="https://travis-ci.org/Qihoo360/evpp.svg?branch=master" alt="Build status"></a>
-[![Platform](https://img.shields.io/badge/platform-%20%20%20%20Linux,%20BSD,%20OS%20X,%20Windows-green.svg?style=flat)](https://github.com/Qihoo360/evpp)
+[![Platform](https://img.shields.io/badge/platform-%20%20%20%20Linux-green.svg?style=flat)](https://github.com/Qihoo360/evpp)
 [![License](https://img.shields.io/badge/license-%20%20BSD%203%20clause-yellow.svg?style=flat)](LICENSE)
 [![Project Status: Active – The project has reached a stable, usable state and is being actively developed.](http://www.repostatus.org/badges/latest/active.svg)](http://www.repostatus.org/#active)
 
@@ -46,7 +46,7 @@ Server/Client则通过Acceptor/Connector来进行连接的接收/发起。其中
 
 ## 2. 几点心得
 
-关于muduo，[《Linux多线程服务端编程》](https://book.douban.com/subject/20471211//)以及众多博客都有很多介绍，在此就不重复前人发言了。挑几点我认为比较重要但很少见人说起的理解。仅是一家之言，抛砖引玉。若能有裨于万一，不胜之喜。
+关于muduo，[《Linux多线程服务端编程》](https://book.douban.com/subject/20471211//)以及众多博客都有很多介绍，在此就不重复前人发言了。挑几点我认为比较重要但很少见人说起的理解。
 
 ### 2.1 Channel==黏合剂
 
@@ -460,9 +460,7 @@ void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
 
 ## 3. 性能评测
 
-惭愧，碍于时间有限，笔者虽尝试了一些方法来对muduo进行性能优化，但未发现可以被觉察到（noticeable）的性能提升。
-
-不过，由于陈硕对muduo进行性能测试的版本已早在2011年，网上对于muduo和其它网络库的性能测试也较少（[evpp](https://github.com/Qihoo360/evpp/blob/master/docs/benchmark_throughput_vs_muduo_cn.md)在2016年左右进行了相关的性能测试，但主要是针对evpp库和其它库的比较），因此将最新版本的muduo和其它库进行一次横向比较，看看当下各个库之间的性能谁优谁劣；再将各个库的当前版本和过去版本进行一次纵向比较，看看新版本有多少 \"长进\" ，想来还是挺有意思的。
+本节对muduoZ的性能进行了相关测试，通过该测试，一则可以在一定程度上检验muduoZ的性能；同时由于陈硕对muduo进行性能测试的版本已早在2011年，网上对于muduo和其它网络库的性能测试也较少（[evpp](https://github.com/Qihoo360/evpp/blob/master/docs/benchmark_throughput_vs_muduo_cn.md)在2016年左右进行了相关的性能测试，但主要是针对evpp库和其它库的比较），因此将最新版本的muduo和其它库进行一次横向比较，看看**当下**各个库之间的性能谁优谁劣；结合各个库在过去版本的测试结果，看看新版本有多少 **\"长进\"** ，想来还是挺有意思的。
 
 ### 3.1 pingpong测试
 
@@ -473,9 +471,7 @@ void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
 测试对象：
 
 * [muduo-2.0.3](https://github.com/chenshuo/muduo/tree/v2.0.3)
-
 * [asio-1.26.0](https://github.com/chriskohlhoff/asio/tree/asio-1-26-0)
-
 * [libevent-2.1.12](https://github.com/libevent/libevent/tree/release-2.1.12-stable)
 
 测试代码：
@@ -499,21 +495,49 @@ void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
 
 * 8-cores and 4-GB RAM are allocated in VMware 17.0.0
 
-**单线程测试结果：**
+**测试结果：**
+
+如下图所示，muduoZ参考了[evpp的测试方法](https://github.com/Qihoo360/evpp/tree/master)，对asio、muduo以及muduoZ在不同连接数量下，不同消息大小对应的吞吐量进行了测试。X轴对应的是连接数量，即进行pingpong消息来回发送的TCP连接数量。以连接数量为1时举例（最左侧的测试组），其对应有四组不同的消息大小，由小到大依次为4096、8192、81920、102400 KiB。通过结果可以发现，muduoZ在消息较大（81920，102400）时表现较好（超过muduo 9.1%）；在消息较小时两者没有明显区别（仅超过muduo 0.4%）。
 
 ![image-20230306153018332](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
 
-如上图，测试的
+针对测试中，单个消息较大时，muduoZ优于muduo的结论，通过消融实验发现主要是与Buffer类的readFd函数实现有关，该函数负责从TCP接收缓冲区读取消息到用户缓冲区。在muduo中，采用大小为65536的extrabuf，在用户缓冲区大小不够时额外存储消息。然而当用户缓冲区剩余可用空间大于等于65536时，此时不会使用extrabuf存储数据，这就导致用户缓冲区无法进一步扩容，进而在消息较大时（>65536KiB）需要更多次数的read/write系统调用。muduoZ则并没有这方面的限制。其实还是空间和时间上的权衡，muduoZ的做法本质上是牺牲空间换取时间。
 
-由于本机的CPU有八个核心，为充分利用CPU资源可以给客户端和服务端程序
+```c++
+ssize_t Buffer::readFd(int fd, int* savedErrno)
+{
+  // saved an ioctl()/FIONREAD call to tell how much to read
+  char extrabuf[65536];
+  struct iovec vec[2];
+  const size_t writable = writableBytes();
+  vec[0].iov_base = begin()+writerIndex_;
+  vec[0].iov_len = writable;
+  vec[1].iov_base = extrabuf;
+  vec[1].iov_len = sizeof extrabuf;
+  // when there is enough space in this buffer, don't read into extrabuf.
+  // when extrabuf is used, we read 128k-1 bytes at most.
+  const int iovcnt = (writable < sizeof extrabuf) ? 2 : 1;
+  const ssize_t n = sockets::readv(fd, vec, iovcnt);
+  if (n < 0)
+  {
+    *savedErrno = errno;
+  }
+  else if (implicit_cast<size_t>(n) <= writable)
+  {
+    writerIndex_ += n;
+  }
+  else
+  {
+    writerIndex_ = buffer_.size();
+    append(extrabuf, n - writable);
+  }
+  return n;
+}
+```
 
+在进行性能测试的过程中，发现libevent的吞吐量明显低于其它参与对比测试的网络库，因此为简洁起见，上图并未附上libevent的相关测试结果。下图为asio和libevent的性能比较，分别选用了两者较新的版本进行测试。可以发现asio的吞吐量始终优于libevent。
 
-
-多线程
-
-![image-20230306153030257](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/Performance_Test.png)
-
-如上图，对客户端和服务端分别启用四个线程进行了性能对比（由于本机为八核心CPU，因此总共八个线程可以把
+![image-20230306153018332](https://raw.githubusercontent.com/a504644805/resources/master/muduoZ/per2.png)
 
 ### 3.2 击鼓传花（vs libevent2）
 
@@ -521,6 +545,10 @@ void TcpConnection::connEstablished() {  // called by TcpServer::newConnection
 
 ## 总结
 
-感谢硕哥，如采访所说，muduo用意
+如陈硕在[采访](<https://www.oschina.net/question/28_61182>)中所说：
 
-<https://www.oschina.net/question/28_61182>
+> ”Muduo一般可以念成拼音，木铎（念：夺）。“木铎”是木舌金铃的意思，引申义是教育传播，摇铃铛以吸引行人注意。“
+>
+> ”Muduo的代码是写出来给人看的。Muduo的目的之一也是放在那里让人学的。”
+
+通过学习muduo源码，我在C++的编程规范、特性使用以及对网络库的理解上都有不小的收获。在这分享一些自己的理解，抛砖引玉，若能有裨于万一，不胜之喜。

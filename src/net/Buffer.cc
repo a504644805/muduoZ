@@ -15,7 +15,7 @@ int Buffer::readFd(int sockfd) {
     vec[1].iov_len = sizeof extrabuf;
     // when there is enough space in this buffer, don't read into extrabuf.
     // when extrabuf is used, we read 128k-1 bytes at most.
-    const int iovcnt = (writable < static_cast<int>(sizeof extrabuf)) ? 2 : 1;
+ //   const int iovcnt = (writable < static_cast<int>(sizeof extrabuf)) ? 2 : 1;
     const int n = static_cast<int>(::readv(sockfd, vec, iovcnt));
     if (n < 0) {
         LOG_SYSFATAL << "read failed";

@@ -31,6 +31,7 @@ void TcpConnection::handleRead() {
         onMessageCb(shared_from_this(), &inputBuffer);
     }
 }
+
 void TcpConnection::handleWrite() {
     /*
     if outputBuffer is not empty
@@ -42,7 +43,7 @@ void TcpConnection::handleWrite() {
     if (outputBuffer.readableBytes() > 0) {
         int n = socket_->write(outputBuffer.readPtr(), outputBuffer.readableBytes());
         outputBuffer.retrieve(n);
-        if (outputBuffer.writeableBytes() == 0) {
+        if (outputBuffer.writeableBytes() == 0) {  // ???
             if (onWriteCompleteCb)
                 onWriteCompleteCb(shared_from_this());
         }
